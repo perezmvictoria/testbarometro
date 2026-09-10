@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Barómetro de adopción de IA — Divino</title>
+<meta name="description" content="Formulario de calibración del proceso de adopción de IA en Divino.">
+<meta name="robots" content="noindex">
+<!-- [PENDIENTE] confirmar el nombre exacto del favicon en /assets/ del repo del sitio
+<link rel="icon" href="/assets/favicon.ico"> -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet-deep:#4B2C7A; --violet-main:#6A3FA0; --violet-mid:#8B5CC7;
+  --violet-soft:#C4A8E0; --violet-pale:#EDE6F6; --violet-ghost:#F7F3FC;
+  --amber:#F2A93B; --amber-light:#FAD38A; --amber-pale:#FEF3DC;
+  --ink:#1A1A1A; --ink-sec:#5F6368; --ink-muted:#9AA0A6;
+  --border:#E0E0E0; --surface:#FAFAFA; --white:#FFFFFF;
+  --shadow-sm:0 2px 8px rgba(74,44,122,0.08);
+  --shadow-md:0 4px 20px rgba(74,44,122,0.13);
+  --radius:12px;
+  /* gradación de los cinco peldaños, del más pálido al más profundo */
+  --step-1:#EDE6F6; --step-2:#C4A8E0; --step-3:#8B5CC7; --step-4:#6A3FA0; --step-5:#4B2C7A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Raleway',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-weight:400; color:var(--ink); background:var(--violet-ghost);
+  line-height:1.6; font-size:16px;
+  min-height:100vh; min-height:100dvh;
+}
+.script{font-family:'Dancing Script',cursive;font-weight:600}
+
+/* ---------- layout ---------- */
+.shell{max-width:720px;margin:0 auto;padding:0 20px 120px}
+header.bar{
+  position:sticky;top:0;z-index:20;background:var(--violet-ghost);
+  padding:16px 0 12px;border-bottom:1px solid var(--border);
+  margin-bottom:28px;
+}
+.bar-inner{max-width:720px;margin:0 auto;padding:0 20px}
+.bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.bar-title{font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--violet-main)}
+.bar-count{font-size:.8rem;color:var(--ink-sec);font-weight:500;white-space:nowrap;text-align:right}
+.track{height:6px;background:var(--violet-pale);border-radius:99px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--violet-mid),var(--violet-main));border-radius:99px;transition:width .35s cubic-bezier(.4,0,.2,1)}
+
+/* ---------- tipografía ---------- */
+h1{font-size:1.9rem;font-weight:800;line-height:1.2;letter-spacing:-.02em;margin-bottom:8px;color:var(--violet-deep)}
+h2.q{font-size:1.4rem;font-weight:700;line-height:1.3;letter-spacing:-.01em;margin-bottom:6px}
+.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--violet-mid);margin-bottom:12px}
+.hint{color:var(--ink-sec);font-size:.95rem;margin-bottom:20px}
+p{margin-bottom:14px}
+strong{font-weight:700}
+
+/* ---------- intro ---------- */
+.intro-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:28px 26px;margin-bottom:20px}
+.intro-card h1{margin-bottom:18px}
+.intro-card p{color:var(--ink-sec)}
+.intro-card p strong{color:var(--ink)}
+.privacy{background:var(--amber-pale);border-left:4px solid var(--amber);border-radius:0 var(--radius) var(--radius) 0;padding:18px 20px;margin:20px 0}
+.privacy p:last-child{margin-bottom:0}
+.timebox{display:inline-flex;align-items:center;gap:8px;background:var(--violet-pale);color:var(--violet-deep);font-weight:600;font-size:.9rem;padding:8px 14px;border-radius:99px}
+
+/* ---------- pantallas ---------- */
+.screen{display:none;animation:in .3s ease}
+.screen.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- opciones ---------- */
+.opts{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.opt{
+  display:flex;align-items:flex-start;gap:13px;
+  background:var(--white);border:2px solid var(--border);border-radius:var(--radius);
+  padding:15px 17px;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.opt:hover{border-color:var(--violet-soft);background:var(--violet-ghost)}
+.opt.sel{border-color:var(--violet-main);background:var(--violet-pale);box-shadow:var(--shadow-sm)}
+.opt input{position:absolute;opacity:0;width:0;height:0}
+.mark{
+  flex:0 0 22px;width:22px;height:22px;margin-top:1px;
+  border:2px solid var(--ink-muted);background:var(--white);
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.mark.radio{border-radius:50%}
+.mark.check{border-radius:6px}
+.opt.sel .mark{border-color:var(--violet-main);background:var(--violet-main)}
+.mark::after{content:'';opacity:0;transition:opacity .15s}
+.mark.radio::after{width:8px;height:8px;border-radius:50%;background:var(--white)}
+.mark.check::after{width:5px;height:10px;border:solid var(--white);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.opt.sel .mark::after{opacity:1}
+.opt-txt{flex:1;font-size:1rem;line-height:1.45}
+.opt-txt .sub{display:block;font-size:.85rem;color:var(--ink-sec);margin-top:3px}
+
+/* ---------- campos de texto ---------- */
+input[type=text],input[type=email],textarea{
+  width:100%;font-family:inherit;font-size:1rem;color:var(--ink);
+  background:var(--white);border:2px solid var(--border);border-radius:var(--radius);
+  padding:13px 15px;transition:border-color .15s;
+}
+input[type=text]:focus,input[type=email]:focus,textarea:focus{outline:none;border-color:var(--violet-main)}
+textarea{resize:vertical;min-height:92px;line-height:1.5}
+label.fl{display:block;font-weight:600;font-size:.9rem;margin-bottom:7px;color:var(--ink)}
+.field{margin-bottom:18px}
+.otro-wrap{margin:2px 0 0 35px;display:none}
+.otro-wrap.on{display:block;animation:in .2s ease}
+
+/* pedido de ejemplo */
+.ejemplo{
+  display:none;background:var(--amber-pale);border:2px solid var(--amber-light);
+  border-radius:var(--radius);padding:16px 18px;margin-top:14px;
+}
+.ejemplo.on{display:block;animation:in .25s ease}
+.ejemplo label{display:block;font-weight:700;font-size:.92rem;margin-bottom:4px}
+.ejemplo .why{font-size:.83rem;color:var(--ink-sec);margin-bottom:10px}
+.ejemplo input{border-color:var(--amber-light);background:var(--white)}
+
+/* ---------- matriz ---------- */
+.matriz-head{background:var(--violet-pale);border-radius:var(--radius);padding:17px 19px;margin-bottom:22px;font-size:.95rem;color:var(--violet-deep)}
+.grupo{font-size:.75rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet-mid);margin:24px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--violet-pale)}
+.grupo:first-of-type{margin-top:0}
+.fila{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);padding:15px 16px;margin-bottom:11px;transition:border-color .15s}
+.fila.done{border-color:var(--violet-soft)}
+.fila-txt{font-size:.97rem;line-height:1.45;margin-bottom:12px;display:flex;gap:9px}
+.fila-num{flex:0 0 auto;font-weight:800;color:var(--violet-soft);font-size:.9rem;padding-top:1px}
+.escala{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.esc{
+  font-family:inherit;font-size:.82rem;line-height:1.25;font-weight:500;color:var(--ink-sec);
+  background:var(--surface);border:2px solid var(--border);border-radius:9px;
+  padding:9px 8px;cursor:pointer;text-align:center;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.esc:hover{border-color:var(--violet-soft)}
+.esc.sel{background:var(--violet-main);border-color:var(--violet-main);color:var(--white);font-weight:600}
+.bar-count .mprog{display:block;font-weight:700;color:var(--violet-main);font-size:.78rem}
+@media(min-width:600px){.escala{grid-template-columns:repeat(4,1fr)}}
+
+/* ---------- navegación ---------- */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;
+  background:var(--white);border-top:1px solid var(--border);
+  padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+  box-shadow:0 -2px 16px rgba(74,44,122,.07);
+}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;gap:12px;align-items:center}
+button.btn{
+  font-family:inherit;font-size:1rem;font-weight:700;border:none;border-radius:99px;
+  padding:14px 30px;cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent;
+}
+.btn.primary{background:var(--violet-main);color:var(--white);flex:1;box-shadow:var(--shadow-sm)}
+.btn.primary:hover{background:var(--violet-deep);box-shadow:var(--shadow-md)}
+.btn.primary:disabled{background:var(--violet-soft);cursor:not-allowed;box-shadow:none}
+.btn.ghost{background:transparent;color:var(--ink-sec);padding:14px 18px;font-weight:600}
+.btn.ghost:hover{color:var(--violet-main)}
+.aviso{color:#B3261E;font-size:.88rem;font-weight:600;margin-top:10px;display:none}
+.aviso.on{display:block}
+
+/* ---------- resultado ---------- */
+.result-hero{border-radius:var(--radius);padding:34px 28px;margin-bottom:22px;box-shadow:var(--shadow-md);text-align:center}
+.result-hero .kicker{font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:10px}
+.result-hero .peldano{font-size:2.3rem;font-weight:800;line-height:1.1;letter-spacing:-.025em;margin-bottom:0}
+.result-hero .num{font-family:'Dancing Script',cursive;font-size:3.4rem;line-height:1;display:block;margin-bottom:4px;opacity:.9}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px 24px;margin-bottom:18px}
+.card h3{font-size:1.05rem;font-weight:800;margin-bottom:10px;color:var(--violet-deep)}
+.paso{background:var(--amber-pale);border-left:4px solid var(--amber);border-radius:0 var(--radius) var(--radius) 0;padding:20px 22px;margin-bottom:18px}
+.paso h3{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-sec);margin-bottom:8px}
+.paso p{font-size:1.05rem;line-height:1.55;margin:0}
+.mapa{display:flex;gap:5px;margin:16px 0 10px}
+.mapa-seg{flex:1;text-align:center}
+.mapa-bar{height:9px;border-radius:99px;margin-bottom:7px}
+.mapa-lbl{font-size:.68rem;font-weight:600;color:var(--ink-muted);line-height:1.2}
+.mapa-seg.here .mapa-lbl{color:var(--violet-deep);font-weight:800}
+.mapa-seg.here .mapa-bar{box-shadow:0 0 0 3px var(--violet-pale)}
+.envio{font-size:.85rem;color:var(--ink-sec);text-align:center;padding:12px}
+.envio.err{color:#B3261E;font-weight:600}
+.firma{text-align:center;color:var(--ink-muted);font-size:.85rem;margin-top:26px}
+.firma .script{font-size:1.3rem;color:var(--violet-mid)}
+
+@media(max-width:560px){ .bar-long{display:none} }
+@media(max-width:480px){
+  h1{font-size:1.55rem}
+  h2.q{font-size:1.2rem}
+  .shell{padding:0 16px 120px}
+  .bar-inner{padding:0 16px}
+  .intro-card{padding:22px 19px}
+  .result-hero .peldano{font-size:1.9rem}
+  .mapa{gap:3px}
+  .mapa-lbl{font-size:.6rem}
+}
+</style>
+</head>
+<body>
+
+<header class="bar" id="bar" hidden>
+  <div class="bar-inner">
+    <div class="bar-top">
+      <span class="bar-title">Barómetro<span class="bar-long"> de adopción de IA</span></span>
+      <span class="bar-count" id="count"></span>
+    </div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+  </div>
+</header>
+
+<main class="shell" id="shell"></main>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <button class="btn ghost" id="back" hidden>Atrás</button>
+    <button class="btn primary" id="next">Empezar</button>
+  </div>
+</nav>
+
+<script>
+/* ==========================================================================
+   BARÓMETRO DE ADOPCIÓN DE IA — DIVINO
+   Contenido: talleres/divino_adopcionia_2026/6.1_barometro.md (fuente de verdad)
+   El cálculo corre entero en el navegador. El HTML es público y no contiene
+   ninguna respuesta.
+   ========================================================================== */
+
+/* Endpoint del Google Apps Script desplegado como web app.
+   Con la constante vacía el formulario funciona igual y guarda en localStorage. */
+const ENDPOINT = "https://script.google.com/macros/s/AKfycby9d2H8mrarN-8ljW3xDh6SJDCVl3pWkrW0dQynUIoo2T85_osLnKYvMRbp2tuyhd4/exec";
+
+/* ---------- contenido de las preguntas ---------- */
+
+const OTRA = {t:"Otra — contame cuál", v:0, otra:true};
+
+const Q = [
+
+/* 1 */ {id:"identidad", tipo:"campos", eyebrow:"Identificación",
+  t:"¿Quién sos?",
+  hint:"El correo es lo que une tu respuesta de hoy con la del cierre del proceso.",
+  campos:[
+    {id:"nombre", label:"Nombre y apellido", ph:"Nombre y apellido"},
+    {id:"mail",   label:"Tu correo de Divino", ph:"nombre@empresa.com", mail:true}
+  ]},
+
+/* 2 */ {id:"area", tipo:"texto", eyebrow:"Identificación",
+  t:"¿En qué área trabajás?", hint:"Escribilo como lo dirías vos.", ph:"Tu área", req:true},
+
+/* 3 */ {id:"cargo", tipo:"texto", eyebrow:"Identificación",
+  t:"¿Cuál es tu cargo?", hint:"Escribilo como lo dirías vos.", ph:"Tu cargo", req:true},
+
+/* 4 · P3 frecuencia — sin opción abierta: las opciones cubren el espacio de días */
+{id:"p3", tipo:"radio", eyebrow:"Tu semana", dim:"frecuencia",
+  t:"La semana pasada, ¿cuántos días abriste una IA para algo del trabajo?",
+  ops:[{t:"0 días",v:0},{t:"1 día",v:1},{t:"2 o 3 días",v:2},{t:"4 días",v:3},{t:"Los 5",v:4}]},
+
+/* 5 · P4 profundidad */
+{id:"p4", tipo:"multi", eyebrow:"Tu último mes", dim:"profundidad",
+  t:"¿Cuáles de estas cosas hiciste con IA en el último mes?",
+  hint:"Marcá todas las que apliquen.",
+  ops:[
+    {t:"Traducir o corregir un texto",v:1},
+    {t:"Resumir un documento largo",v:1},
+    {t:"Redactar un mail o un informe desde cero",v:2},
+    {t:"Analizar una planilla o un conjunto de datos",v:2},
+    {t:"Preparar una presentación completa",v:2},
+    {t:"Pensar una decisión difícil conversando con la IA",v:3},
+    {t:"Armar algo que se ejecuta solo cada vez que hace falta",v:4},
+    OTRA
+  ],
+  ejemplo:{cuando:v=>v>=3, label:"Contá en una línea qué hiciste.",
+    why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Una línea alcanza"}},
+
+/* 6 · P5 configuración */
+{id:"p5", tipo:"radio", eyebrow:"Cómo la tenés armada", dim:"configuracion",
+  t:"¿Creaste alguna vez un proyecto o espacio con instrucciones que reutilizás?",
+  ops:[
+    {t:"Todavía no sé qué es eso",v:0},
+    {t:"Sé qué es y todavía no lo usé",v:1},
+    {t:"Lo probé una vez",v:2},
+    {t:"Tengo uno o dos proyectos que uso",v:3},
+    {t:"Tengo varios armados con instrucciones y documentos, los uso siempre",v:4},
+    OTRA
+  ],
+  ejemplo:{cuando:v=>v>=3, label:"Nombrá uno de tus proyectos y para qué lo usás.",
+    why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Nombre del proyecto y para qué"}},
+
+/* 7 · P6 diagnóstico */
+{id:"p6", tipo:"radio", eyebrow:"Cuando algo sale mal", dim:"diagnostico",
+  t:"La IA te devuelve algo que sirve poco. ¿Qué hacés habitualmente?",
+  ops:[
+    {t:"Lo descarto y lo hago a mano",v:0},
+    {t:"Le vuelvo a pedir lo mismo, a ver si sale mejor",v:1},
+    {t:"Le explico qué estuvo mal y le pido que lo corrija",v:2},
+    {t:"Le doy más contexto o un ejemplo de cómo lo quiero, y vuelvo a pedir",v:3},
+    {t:"Le pregunto qué información le falta para hacerlo bien",v:4},
+    OTRA
+  ]},
+
+/* 8 · P7 verificación */
+{id:"p7", tipo:"radio", eyebrow:"Antes de usarlo", dim:"verificacion",
+  t:"Antes de usar en el trabajo algo que te devolvió la IA:",
+  ops:[
+    {t:"Lo uso como viene",v:0},
+    {t:"Le ajusto la redacción",v:1},
+    {t:"Lo reviso con lo que sé del tema",v:2},
+    {t:"Verifico los datos contra la fuente",v:3},
+    {t:"Le pido que muestre de dónde salió cada cosa y lo chequeo",v:4},
+    OTRA
+  ],
+  ejemplo:{cuando:v=>v>=3, label:"Contá la última vez que encontraste un error así.",
+    why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Qué encontraste y cómo"}},
+
+/* 9 · P8 matriz */
+{id:"p8", tipo:"matriz", eyebrow:"El mapa de lo que existe",
+  t:"Conceptos y prácticas",
+  head:"Esta lista incluye cosas que muy poca gente usa hoy. Marcar «todavía no lo conozco» es la respuesta más común, y sirve exactamente igual: nos dice qué vale la pena mostrar. Leerla ya te da el mapa de lo que existe.",
+  escala:[
+    {t:"Todavía no lo conozco",v:0},
+    {t:"Sé qué es, todavía sin usarlo",v:1},
+    {t:"Lo usé alguna vez",v:2},
+    {t:"Lo uso habitualmente",v:3}
+  ],
+  grupos:[
+    {g:"Configuración de la herramienta", filas:[
+      "Instrucciones tuyas guardadas a nivel de cuenta, que aplican a todas tus conversaciones",
+      "Proyectos o espacios con su propio contexto y sus propios archivos",
+      "Formatos de respuesta guardados, para que conteste siempre con la estructura que preferís",
+      "Criterio para decidir qué archivo va al proyecto y cuál va solo al chat"
+    ]},
+    {g:"Contexto y consumo", filas:[
+      "Ventana de contexto y tokens — cuánto alcanza a sostener una conversación",
+      "Reconocer cuándo la conversación se saturó y conviene abrir una nueva",
+      "Trasladar el estado a un chat nuevo con un resumen, en lugar de arrancar de cero",
+      "Elegir el modelo según la tarea, sabiendo que consumen distinto"
+    ]},
+    {g:"Artefactos y procedimientos", filas:[
+      "Guardar los pedidos que funcionan para reusarlos",
+      "Skills — instrucciones especializadas para un tipo de tarea que se repite",
+      "Conectores o MCP — que la IA acceda a otras herramientas que ya usás",
+      "Agentes — que ejecute varios pasos sin que la vayas guiando"
+    ]},
+    {g:"Fuentes y verificación", filas:[
+      "Pedirle que responda usando únicamente las fuentes que vos le diste",
+      "Pedirle las citas textuales antes del análisis",
+      "Herramientas de corpus propio, como NotebookLM"
+    ]}
+  ],
+  /* fila 16 del documento: abierta, sin puntaje */
+  abierta:{label:"Otra práctica que uses y falte en esta lista",
+    ph:"Contanos cuál (opcional)"},
+  /* el ejemplo se pide una sola vez, si marcó «lo uso habitualmente» en
+     skills (10), conectores (11) o agentes (12) */
+  ejemploFilas:[10,11,12],
+  ejemplo:{label:"Contá para qué lo usás.",
+    why:"Marcaste que usás habitualmente skills, conectores o agentes.", ph:"Para qué lo usás"}},
+
+/* 10 · P9 dónde queda */
+{id:"p9", tipo:"radio", eyebrow:"Dónde vive tu trabajo", dim:"continuidad",
+  t:"Lo que trabajás con IA, ¿dónde queda?",
+  ops:[
+    {t:"En la conversación, y vuelvo a buscarlo ahí cuando lo necesito",v:0},
+    {t:"Lo copio a un documento suelto",v:1},
+    {t:"Va a una carpeta de archivos organizada con criterio propio",v:2},
+    {t:"Va a Notion, Drive u otra herramienta donde ya trabajo",v:2},
+    {t:"Va al sistema donde trabaja mi equipo, y otras personas lo usan",v:3},
+    OTRA
+  ],
+  ejemplo:{cuando:v=>v>=3, label:"Nombrá el sistema y quiénes lo usan.",
+    why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Qué sistema y quiénes"}},
+
+/* 11 · P10 nomenclatura */
+{id:"p10", tipo:"radio", eyebrow:"Tu orden", dim:"orden",
+  t:"¿Tenés convenciones propias para nombrar y describir lo que guardás?",
+  ops:[
+    {t:"Todavía no lo pensé",v:0},
+    {t:"Nombro los archivos con criterio, sin regla escrita",v:1},
+    {t:"Tengo una nomenclatura definida que sigo",v:2},
+    {t:"Tengo nomenclatura y descripciones de qué contiene cada documento",v:2,alta:true},
+    OTRA
+  ],
+  ejemplo:{cuando:(v,op)=>!!(op&&op.alta), label:"Dame un ejemplo de cómo nombrás un archivo.",
+    why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Un nombre de archivo tuyo"}},
+
+/* 12 · P11 autonomía — bandera, sin puntaje */
+{id:"p11", tipo:"radio", eyebrow:"Si se corta el acceso",
+  t:"Si perdieras el acceso a la IA durante una semana, ¿qué pasa con tu trabajo?",
+  ops:[
+    {t:"Sigo igual, la uso poco",v:0},
+    {t:"Tardo más, y llego",v:1},
+    {t:"Se complican tareas puntuales que ya venía delegando",v:2,alta:true},
+    {t:"Varias cosas que hoy salen quedarían sin salir",v:3,alta:true},
+    OTRA
+  ]},
+
+/* 13 · P12 superficies — contexto, sin puntaje */
+{id:"p12", tipo:"multi", eyebrow:"Por dónde entrás",
+  t:"¿Por dónde la usás?", hint:"Marcá todas las que apliquen.",
+  ops:[
+    {t:"La ventana de chat en el navegador",v:0},
+    {t:"La aplicación de escritorio",v:0},
+    {t:"La IA que ya viene dentro de las herramientas que uso — Excel, correo, sistemas internos",v:0},
+    {t:"Un entorno donde la IA trabaja directamente con mis archivos o mi sistema",v:0},
+    OTRA
+  ]},
+
+/* 14 · P13 herramientas + cuál usás más */
+{id:"p13", tipo:"multi", eyebrow:"Qué usás", subq:true,
+  t:"¿Qué herramientas de IA usás?", hint:"Marcá todas las que apliquen.",
+  grupos:[
+    {g:"Chats de uso general", ops:["ChatGPT","Gemini","Claude","Copilot","Meta AI o WhatsApp","Grok","DeepSeek"]},
+    {g:"IA dentro de herramientas que ya usás en Divino", ops:["Copilot en Outlook o en Office","Rovo, la IA de Jira","La IA de la suite Adobe","La IA de Qlik Sense"]}
+  ],
+  ninguna:"Todavía ninguna",
+  subLabel:"De las que marcaste, ¿cuál usás más?"},
+
+/* 15 · P14 acceso — gobernanza, sin puntaje */
+{id:"p14", tipo:"multi", eyebrow:"Cómo accedés",
+  t:"¿Cómo accedés a esas herramientas?",
+  hint:"Marcá todas las que apliquen — es común combinar accesos.",
+  ops:[
+    {t:"Cuenta de Divino",v:0},
+    {t:"Cuenta personal gratuita",v:0,personal:true},
+    {t:"Cuenta personal paga, que pago yo",v:0,personal:true},
+    {t:"Cuenta personal paga, que paga otra persona u otra empresa",v:0,personal:true},
+    {t:"Todavía sin acceso",v:0},
+    OTRA
+  ]},
+
+/* 16 · P15 datos — gobernanza, sin puntaje
+   [PENDIENTE DE INÉS] formulación exacta de las dos filas de sistemas internos
+   y las URLs de QlikView / Qlik Sense */
+{id:"p15", tipo:"multi", eyebrow:"Con qué trabajás",
+  t:"¿Con qué tipo de información trabajás cuando usás IA?",
+  hint:"Marcá todas las que apliquen.",
+  ops:[
+    {t:"Información pública o general",v:0},
+    {t:"Textos y documentos que escribo yo",v:0},
+    {t:"Planillas o reportes de QlikView o Qlik Sense",v:0},
+    {t:"Información del ERP o del sistema de punta de venta",v:0},
+    {t:"Datos de clientes o proveedores",v:0,sensible:true},
+    {t:"Información de personas: legajos, evaluaciones, sueldos",v:0,sensible:true},
+    {t:"Información financiera o comercial reservada",v:0,sensible:true},
+    OTRA
+  ]},
+
+/* 17 · P16 recomendación — abierta, opcional */
+{id:"p16", tipo:"largo", eyebrow:"Tu aporte",
+  t:"¿Hay alguna herramienta de IA que uses y que te parezca que le serviría al resto de Divino?",
+  hint:"Contanos cuál y para qué. Es opcional.",
+  ph:"Cuál y para qué la usarías"},
+
+/* 18 · P17 tarea deseada — abierta, opcional */
+{id:"p17", tipo:"largo", eyebrow:"Tu aporte",
+  t:"¿Hay alguna tarea de tu trabajo donde te gustaría usar IA y todavía no sabés cómo?",
+  hint:"Es opcional, y es de lo más útil para diseñar el programa.",
+  ph:"Qué tarea"}
+];
+
+/* ---------- los cinco peldaños ---------- */
+
+const PELDANOS = [
+  {n:1, nombre:"Punto de partida", min:0,  max:6,  color:"var(--step-1)", texto:"var(--violet-deep)",
+   cuerpo:"Estás arrancando, y ese es el mejor momento para hacerlo con criterio.",
+   paso:"Elegí una tarea concreta de tu semana y hacela con IA acompañada la primera vez. Una sola, con resultado usable."},
+  {n:2, nombre:"Explorando", min:7,  max:14, color:"var(--step-2)", texto:"var(--violet-deep)",
+   cuerpo:"Ya la usás para cosas de tu trabajo. Cada conversación arranca de cero, y ahí está tu oportunidad más grande.",
+   paso:"Dar contexto antes de pedir — quién sos, para qué es, cómo tiene que quedar. Es el cambio que más mueve la calidad de lo que recibís."},
+  {n:3, nombre:"Incorporando", min:15, max:22, color:"var(--step-3)", texto:"var(--white)",
+   cuerpo:"La IA ya toca tareas reales de tu trabajo. Estás repitiendo el contexto cada vez, y eso tiene solución.",
+   paso:"Armar tu primer proyecto con instrucciones guardadas y los documentos que usás siempre. Dejás de explicar quién sos en cada conversación."},
+  {n:4, nombre:"Integrando", min:23, max:31, color:"var(--step-4)", texto:"var(--white)",
+   cuerpo:"Tenés la herramienta configurada y trabajando en el centro de tu rol.",
+   paso:"Criterio. Decidir con intención qué le delegás, qué te reservás, y cómo verificás lo que te devuelve antes de usarlo."},
+  {n:5, nombre:"Referente", min:32, max:40, color:"var(--step-5)", texto:"var(--white)",
+   cuerpo:"Rediseñaste cómo trabajás y producís cosas que antes quedaban fuera de tu alcance.",
+   paso:"Que lo que armaste llegue a tu equipo. Tu configuración sirve a más gente que vos."}
+];
+
+/* Pasos por dimensión y por bandera.
+   La lógica de selección ya corre y guarda su resultado en la hoja.
+   Mientras estos textos estén vacíos, la pantalla muestra el paso del peldaño.
+   [PENDIENTE — los escribe Victoria] */
+const PASO_DIMENSION = {
+  configuracion:"", diagnostico:"", verificacion:"",
+  continuidad:"", profundidad:"", frecuencia:""
+};
+const PASO_BANDERA = {
+  intensidad_sin_metodo:"", uso_sin_control:"", desconocimiento:"",
+  dependencia_sin_arquitectura:"", constructor_solitario:""
+};
+
+/* orden de desempate entre dimensiones iguales */
+const DESEMPATE = ["configuracion","diagnostico","verificacion","continuidad","profundidad","frecuencia"];
+
+/* ---------- estado ---------- */
+
+const R = {};              // respuestas crudas
+let paso = 0;              // 0 = intro · 1..18 = preguntas · 19 = resultado
+const TOTAL = Q.length;
+let resultado = null;
+
+const $ = s => document.querySelector(s);
+const shell = $("#shell"), nav = $("#nav"), bar = $("#bar");
+const btnNext = $("#next"), btnBack = $("#back");
+
+/* ---------- render ---------- */
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function render(){
+  window.scrollTo(0,0);
+  bar.hidden = (paso===0 || paso>TOTAL);
+  if(paso>0 && paso<=TOTAL){
+    $("#count").textContent = `Pregunta ${paso} de ${TOTAL}`;
+    $("#fill").style.width = (paso/TOTAL*100)+"%";
+  }
+  if(paso===0) return renderIntro();
+  if(paso>TOTAL) return renderResultado();
+  renderPregunta(Q[paso-1]);
+  btnBack.hidden = false;
+  btnNext.textContent = paso===TOTAL ? "Ver mi resultado" : "Siguiente";
+  nav.hidden = false;
+}
+
+function renderIntro(){
+  btnBack.hidden = true;
+  btnNext.textContent = "Empezar";
+  nav.hidden = false;
+  shell.innerHTML = `
+  <div class="intro-card" style="margin-top:34px">
+    <h1>Antes de arrancar</h1>
+    <p>Divino está armando un programa de formación en inteligencia artificial. Este formulario es el primer paso: sirve para saber dónde está parada cada persona hoy y diseñar los contenidos a partir de eso.</p>
+    <p><strong>Cada respuesta suma igual.</strong> Marcar «todavía no lo conozco» es de las respuestas más útiles que podés dar, porque nos dice qué vale la pena mostrar. Las listas incluyen cosas que hoy usa muy poca gente.</p>
+    <p><strong>Al terminar vas a ver tu resultado.</strong> En qué punto del recorrido estás, qué conceptos corresponden a ese momento y cuál es tu siguiente paso concreto. Es tuyo y te lo llevás.</p>
+    <p><strong>Te pedimos nombre y correo por dos razones.</strong> Para armar los grupos según lo que cada persona necesita, y para repetir esta medición al final del proceso y que puedas ver cuánto avanzaste. El correo es lo que une tu respuesta de hoy con la del cierre.</p>
+    <div class="privacy">
+      <p><strong>Qué recibe Divino.</strong> Tu nombre, correo, área, cargo y el punto en el que estás, para organizar los grupos. Qué herramientas usás, cómo accedés a ellas y con qué información trabajás llega agrupado en números del conjunto.</p>
+    </div>
+    <p><strong>Contestá con lo que realmente hacés.</strong> El programa se diseña sobre eso. Cada persona arranca desde donde está, y ese punto de partida es el comienzo del recorrido.</p>
+    <p style="margin-bottom:0"><span class="timebox">Lleva entre 10 y 15 minutos · conviene hacerlo de una sentada</span></p>
+  </div>`;
+}
+
+function renderPregunta(q){
+  let h = `<div style="padding-top:6px">`;
+  if(q.eyebrow) h += `<div class="eyebrow">${esc(q.eyebrow)}</div>`;
+  h += `<h2 class="q">${esc(q.t)}</h2>`;
+  if(q.hint) h += `<p class="hint">${esc(q.hint)}</p>`;
+  else h += `<div style="height:14px"></div>`;
+
+  if(q.tipo==="campos") h += bloqueCampos(q);
+  if(q.tipo==="texto")  h += bloqueTexto(q);
+  if(q.tipo==="largo")  h += bloqueLargo(q);
+  if(q.tipo==="radio")  h += bloqueOps(q,"radio");
+  if(q.tipo==="multi")  h += q.grupos ? bloqueHerramientas(q) : bloqueOps(q,"check");
+  if(q.tipo==="matriz") h += bloqueMatriz(q);
+
+  if(q.ejemplo) h += `
+    <div class="ejemplo" id="ej">
+      <label for="ej-in">${esc(q.ejemplo.label)}</label>
+      <div class="why">${esc(q.ejemplo.why)}</div>
+      <input type="text" id="ej-in" placeholder="${esc(q.ejemplo.ph)}" value="${esc(R[q.id+"_ejemplo"]||"")}">
+    </div>`;
+
+  h += `<div class="aviso" id="aviso"></div></div>`;
+  shell.innerHTML = h;
+  cablear(q);
+}
+
+function bloqueCampos(q){
+  return q.campos.map(c=>`<div class="field">
+    <label class="fl" for="c-${c.id}">${esc(c.label)}</label>
+    <input type="${c.mail?"email":"text"}" id="c-${c.id}" placeholder="${esc(c.ph)}"
+      value="${esc(R[c.id]||"")}" autocomplete="${c.mail?"email":"name"}"
+      autocapitalize="${c.mail?"off":"words"}" spellcheck="false"></div>`).join("");
+}
+
+function bloqueTexto(q){
+  return `<div class="field"><input type="text" id="in" placeholder="${esc(q.ph)}"
+    value="${esc(R[q.id]||"")}" autocomplete="off"></div>`;
+}
+function bloqueLargo(q){
+  return `<div class="field"><textarea id="in" placeholder="${esc(q.ph)}">${esc(R[q.id]||"")}</textarea></div>`;
+}
+
+function bloqueOps(q,tipo){
+  const sel = R[q.id];
+  let h = `<div class="opts">`;
+  q.ops.forEach((op,i)=>{
+    const on = tipo==="radio" ? sel===i : Array.isArray(sel)&&sel.includes(i);
+    h += `<label class="opt${on?" sel":""}" data-i="${i}">
+      <span class="mark ${tipo}"></span>
+      <span class="opt-txt">${esc(op.t)}</span></label>`;
+    if(op.otra) h += `<div class="otro-wrap${on?" on":""}" id="ow-${i}">
+      <input type="text" id="otro-${i}" placeholder="Contanos cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>`;
+  });
+  return h+`</div>`;
+}
+
+function bloqueHerramientas(q){
+  const sel = R[q.id]||[];
+  const nin = R[q.id+"_ninguna"]===true;
+  let h = `<div id="tools">`;
+  q.grupos.forEach(gr=>{
+    h += `<div class="grupo">${esc(gr.g)}</div><div class="opts">`;
+    gr.ops.forEach(name=>{
+      const on = sel.includes(name);
+      h += `<label class="opt tool${on?" sel":""}" data-name="${esc(name)}">
+        <span class="mark check"></span><span class="opt-txt">${esc(name)}</span></label>`;
+    });
+    h += `</div>`;
+  });
+  h += `<div class="grupo">Cierre</div><div class="opts">
+    <label class="opt tool${sel.includes("__otra")?" sel":""}" data-name="__otra">
+      <span class="mark check"></span><span class="opt-txt">Otra — contame cuál</span></label>
+    <div class="otro-wrap${sel.includes("__otra")?" on":""}" id="ow-tool">
+      <input type="text" id="otro-tool" placeholder="Contanos cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>
+    <label class="opt${nin?" sel":""}" id="ninguna">
+      <span class="mark check"></span><span class="opt-txt">${esc(q.ninguna)}</span></label>
+  </div>`;
+  h += `<div id="subq" style="display:${sel.length&&!nin?"block":"none"};margin-top:26px">
+    <div class="grupo">${esc(q.subLabel)}</div>
+    <div class="opts" id="sub-ops"></div></div></div>`;
+  return h;
+}
+
+function bloqueMatriz(q){
+  const vals = R.p8 || {};
+  let h = `<div class="matriz-head">${esc(q.head)}</div>`;
+  let n = 0;
+  q.grupos.forEach(gr=>{
+    h += `<div class="grupo">${esc(gr.g)}</div>`;
+    gr.filas.forEach(f=>{
+      n++;
+      const v = vals[n];
+      h += `<div class="fila${v!==undefined?" done":""}" data-fila="${n}">
+        <div class="fila-txt"><span class="fila-num">${n}</span><span>${esc(f)}</span></div>
+        <div class="escala">`;
+      q.escala.forEach(e=>{
+        h += `<button type="button" class="esc${v===e.v?" sel":""}" data-fila="${n}" data-v="${e.v}">${esc(e.t)}</button>`;
+      });
+      h += `</div></div>`;
+    });
+  });
+  h += `<div class="grupo">${esc(q.abierta.label)}</div>
+    <div class="field"><input type="text" id="p8-abierta" placeholder="${esc(q.abierta.ph)}"
+      value="${esc(R.p8_abierta||"")}"></div>
+`;
+  return h;
+}
+
+/* ---------- interacción ---------- */
+
+function cablear(q){
+  const aviso = $("#aviso");
+  const limpiar = ()=>aviso.classList.remove("on");
+
+  if(q.tipo==="campos"){
+    q.campos.forEach((c,i)=>{
+      const el = $("#c-"+c.id);
+      el.addEventListener("input",()=>{R[c.id]=el.value.trim();limpiar()});
+      if(i===0) setTimeout(()=>el.focus(),120);
+    });
+  }
+
+  if(q.tipo==="texto"||q.tipo==="largo"){
+    const el = $("#in");
+    el.addEventListener("input",()=>{R[q.id]=el.value.trim();limpiar()});
+    setTimeout(()=>{if(q.tipo==="texto")el.focus()},120);
+  }
+
+  if(q.tipo==="radio"){
+    shell.querySelectorAll(".opt[data-i]").forEach(l=>{
+      l.addEventListener("click",()=>{
+        const i = +l.dataset.i;
+        R[q.id] = i;
+        shell.querySelectorAll(".opt[data-i]").forEach(o=>o.classList.remove("sel"));
+        l.classList.add("sel");
+        shell.querySelectorAll(".otro-wrap").forEach(w=>w.classList.remove("on"));
+        if(q.ops[i].otra){
+          const w = $("#ow-"+i); w.classList.add("on"); $("#otro-"+i).focus();
+        } else { R[q.id+"_otra"] = ""; }
+        toggleEjemplo(q); limpiar();
+      });
+    });
+  }
+
+  if(q.tipo==="multi" && !q.grupos){
+    shell.querySelectorAll(".opt[data-i]").forEach(l=>{
+      l.addEventListener("click",()=>{
+        const i = +l.dataset.i;
+        const arr = R[q.id] = R[q.id]||[];
+        const k = arr.indexOf(i);
+        if(k>=0){arr.splice(k,1);l.classList.remove("sel")}
+        else{arr.push(i);l.classList.add("sel")}
+        if(q.ops[i].otra){
+          const w = $("#ow-"+i);
+          w.classList.toggle("on",arr.includes(i));
+          if(arr.includes(i)) $("#otro-"+i).focus(); else R[q.id+"_otra"]="";
+        }
+        toggleEjemplo(q); limpiar();
+      });
+    });
+  }
+
+  if(q.tipo==="multi" && q.grupos) cablearHerramientas(q,limpiar);
+
+  if(q.tipo==="matriz"){
+    R.p8 = R.p8||{};
+    shell.querySelectorAll(".esc").forEach(b=>{
+      b.addEventListener("click",()=>{
+        const f = +b.dataset.fila;
+        R.p8[f] = +b.dataset.v;
+        b.closest(".escala").querySelectorAll(".esc").forEach(x=>x.classList.remove("sel"));
+        b.classList.add("sel");
+        b.closest(".fila").classList.add("done");
+        progMatriz(); toggleEjemplo(q); limpiar();
+      });
+    });
+    $("#p8-abierta").addEventListener("input",e=>R.p8_abierta=e.target.value.trim());
+    progMatriz();
+  }
+
+  shell.querySelectorAll('[id^="otro-"]').forEach(el=>{
+    el.addEventListener("input",()=>{R[q.id+"_otra"]=el.value.trim()});
+  });
+  if($("#ej-in")) $("#ej-in").addEventListener("input",e=>R[q.id+"_ejemplo"]=e.target.value.trim());
+  toggleEjemplo(q);
+}
+
+function cablearHerramientas(q,limpiar){
+  const pintarSub = ()=>{
+    const sel = (R[q.id]||[]).filter(x=>x!=="__otra");
+    const otra = (R[q.id]||[]).includes("__otra") && R[q.id+"_otra"];
+    const lista = otra ? sel.concat([R[q.id+"_otra"]]) : sel;
+    const box = $("#subq"), ops = $("#sub-ops");
+    if(!lista.length || R[q.id+"_ninguna"]){ box.style.display="none"; return; }
+    box.style.display = "block";
+    ops.innerHTML = lista.map(n=>
+      `<label class="opt sub${R.p13_mas===n?" sel":""}" data-n="${esc(n)}">
+        <span class="mark radio"></span><span class="opt-txt">${esc(n)}</span></label>`).join("");
+    ops.querySelectorAll(".opt").forEach(l=>l.addEventListener("click",()=>{
+      R.p13_mas = l.dataset.n;
+      ops.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));
+      l.classList.add("sel"); limpiar();
+    }));
+  };
+
+  shell.querySelectorAll(".opt.tool").forEach(l=>{
+    l.addEventListener("click",()=>{
+      const name = l.dataset.name;
+      const arr = R[q.id] = R[q.id]||[];
+      const k = arr.indexOf(name);
+      if(k>=0){arr.splice(k,1);l.classList.remove("sel")}
+      else{arr.push(name);l.classList.add("sel");R[q.id+"_ninguna"]=false;$("#ninguna").classList.remove("sel")}
+      if(name==="__otra"){
+        const w = $("#ow-tool");
+        w.classList.toggle("on",arr.includes("__otra"));
+        if(arr.includes("__otra")) $("#otro-tool").focus(); else R[q.id+"_otra"]="";
+      }
+      if(R.p13_mas && !arr.includes(R.p13_mas) && R.p13_mas!==R[q.id+"_otra"]) R.p13_mas=null;
+      pintarSub(); limpiar();
+    });
+  });
+  $("#otro-tool").addEventListener("input",e=>{R[q.id+"_otra"]=e.target.value.trim();pintarSub()});
+  $("#ninguna").addEventListener("click",()=>{
+    const on = !R[q.id+"_ninguna"];
+    R[q.id+"_ninguna"] = on;
+    $("#ninguna").classList.toggle("sel",on);
+    if(on){
+      R[q.id]=[]; R.p13_mas=null; R[q.id+"_otra"]="";
+      shell.querySelectorAll(".opt.tool").forEach(o=>o.classList.remove("sel"));
+      $("#ow-tool").classList.remove("on");
+    }
+    pintarSub(); limpiar();
+  });
+  pintarSub();
+}
+
+function toggleEjemplo(q){
+  const box = $("#ej"); if(!box) return;
+  let mostrar = false;
+  if(q.tipo==="radio"){
+    const i = R[q.id];
+    if(i!==undefined && q.ops[i] && !q.ops[i].otra) mostrar = q.ejemplo.cuando(q.ops[i].v,q.ops[i]);
+  }
+  if(q.tipo==="multi"){
+    const arr = R[q.id]||[];
+    const max = arr.reduce((m,i)=>q.ops[i].otra?m:Math.max(m,q.ops[i].v),0);
+    mostrar = arr.length>0 && q.ejemplo.cuando(max);
+  }
+  if(q.tipo==="matriz"){
+    mostrar = q.ejemploFilas.some(f=>R.p8 && R.p8[f]===3);
+  }
+  box.classList.toggle("on",mostrar);
+}
+
+function progMatriz(){
+  const n = Object.keys(R.p8||{}).length;
+  const el = $("#count"); if(!el) return;
+  el.innerHTML = `Pregunta ${paso} de ${TOTAL}`
+    + `<span class="mprog">${n===15?"las 15 respondidas":`${n} de 15 respondidas`}</span>`;
+}
+
+/* ---------- validación ---------- */
+
+function validar(q){
+  const falta = m=>{const a=$("#aviso");a.textContent=m;a.classList.add("on");return false};
+  if(q.tipo==="campos"){
+    for(const c of q.campos){
+      if(!R[c.id]) return falta(`Completá «${c.label}» para seguir.`);
+      if(c.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(R[c.id]))
+        return falta("Revisá el correo: le falta algo para estar completo.");
+    }
+    return true;
+  }
+  if(q.tipo==="texto")  return R[q.id] ? true : falta("Completá este campo para seguir.");
+  if(q.tipo==="largo")  return true;                      // opcionales
+  if(q.tipo==="radio")  return R[q.id]!==undefined ? true : falta("Elegí una opción para seguir.");
+  if(q.tipo==="multi"){
+    if(q.grupos){
+      const marcadas = (R[q.id]||[]).filter(x=>x!=="__otra").length + ((R[q.id]||[]).includes("__otra")?1:0);
+      if(!marcadas && !R[q.id+"_ninguna"]) return falta("Marcá al menos una, o «Todavía ninguna».");
+      if(marcadas>1 && !R.p13_mas) return falta("Elegí cuál de las que marcaste usás más.");
+      if(marcadas===1 && !R.p13_mas){
+        const u=(R[q.id]||[]).filter(x=>x!=="__otra"); R.p13_mas = u.length?u[0]:(R[q.id+"_otra"]||"");
+      }
+      return true;
+    }
+    return (R[q.id]||[]).length ? true : falta("Marcá al menos una opción para seguir.");
+  }
+  if(q.tipo==="matriz"){
+    const n = Object.keys(R.p8||{}).length;
+    return n===15 ? true : falta(`Te faltan ${15-n} filas. Cada una tiene respuesta útil, incluida «todavía no lo conozco».`);
+  }
+  return true;
+}
+
+/* ---------- cálculo ---------- */
+
+function valorRadio(id){
+  const i = R[id]; const q = Q.find(x=>x.id===id);
+  if(i===undefined || !q.ops[i] || q.ops[i].otra) return 0;   // «Otra» suma 0
+  return q.ops[i].v;
+}
+function opRadio(id){
+  const i = R[id]; const q = Q.find(x=>x.id===id);
+  return (i===undefined) ? null : q.ops[i];
+}
+function conEjemplo(id){ return !!(R[id+"_ejemplo"] && R[id+"_ejemplo"].length) }
+
+function calcular(){
+  /* --- bloque base --- */
+  const frecuencia = valorRadio("p3");
+
+  const qp4 = Q.find(x=>x.id==="p4");
+  const marcadas = R.p4||[];
+  let profundidad = marcadas.reduce((m,i)=>qp4.ops[i].otra?m:Math.max(m,qp4.ops[i].v),0);
+  if(profundidad>=3 && !conEjemplo("p4")) profundidad -= 1;   // sin ejemplo baja un escalón
+
+  let configuracion = valorRadio("p5");
+  if(configuracion>=3 && !conEjemplo("p5")) configuracion -= 1;
+
+  const diagnostico = valorRadio("p6");
+
+  let verificacion = valorRadio("p7");
+  if(verificacion>=3 && !conEjemplo("p7")) verificacion -= 1;
+
+  const base = frecuencia+profundidad+configuracion+diagnostico+verificacion;
+
+  /* --- matriz --- */
+  const filas = {}, m8 = R.p8||{};
+  for(let f=1;f<=15;f++) filas[f] = m8[f]||0;
+  if(!conEjemplo("p8")) [10,11,12].forEach(f=>{ if(filas[f]===3) filas[f]=2 });
+  const sumaMatriz = Object.values(filas).reduce((a,b)=>a+b,0);      // 0 a 45
+  const matriz = Math.round((sumaMatriz/3)*100)/100;                  // 0 a 15
+  const sumaConfigMatriz = filas[1]+filas[2]+filas[3]+filas[4];       // 0 a 12
+  const cerosMatriz = Object.values(filas).filter(v=>v===0).length;
+
+  /* --- continuidad y orden --- */
+  let continuidad = valorRadio("p9");
+  if(continuidad>=3 && !conEjemplo("p9")) continuidad -= 1;
+
+  const opP10 = opRadio("p10");
+  let orden = valorRadio("p10");
+  if(opP10 && opP10.alta && !conEjemplo("p10")) orden -= 1;
+
+  const avanzado = matriz+continuidad+orden;
+  const total = Math.round((base+avanzado)*100)/100;
+
+  const peldano = PELDANOS.find(p=>total>=p.min && total<=p.max) || PELDANOS[0];
+
+  /* --- banderas --- */
+  const opP11 = opRadio("p11");
+  const qp14 = Q.find(x=>x.id==="p14"), qp15 = Q.find(x=>x.id==="p15");
+  const cuentaPersonal = (R.p14||[]).some(i=>qp14.ops[i].personal);
+  const datoSensible  = (R.p15||[]).some(i=>qp15.ops[i].sensible);
+
+  const banderas = [];
+  if(frecuencia>=3 && configuracion<=1)        banderas.push("intensidad_sin_metodo");
+  if(profundidad>=3 && verificacion<=1)        banderas.push("uso_sin_control");
+  if(R.p5===0 || cerosMatriz>10)               banderas.push("desconocimiento");
+  if(cuentaPersonal && datoSensible)           banderas.push("exposicion");
+  if(opP11 && opP11.alta && sumaConfigMatriz<=4) banderas.push("dependencia_sin_arquitectura");
+  if(sumaMatriz>=30 && continuidad<=1)         banderas.push("constructor_solitario");
+
+  /* --- siguiente paso ---
+     Regla 1: las banderas mandan.
+     Regla 2: peldaños 1 y 2 reciben el paso del peldaño; del 3 en adelante,
+              el paso sale de la dimensión más floja. */
+  const dims = {configuracion,diagnostico,verificacion,continuidad,profundidad,frecuencia};
+  const norm = {                        // llevadas a 0-1 para compararlas entre sí
+    configuracion:configuracion/4, diagnostico:diagnostico/4, verificacion:verificacion/4,
+    continuidad:continuidad/3, profundidad:profundidad/4, frecuencia:frecuencia/4
+  };
+  let dimFloja = DESEMPATE[0], peor = 2;
+  DESEMPATE.forEach(d=>{ if(norm[d] < peor - 1e-9){ peor = norm[d]; dimFloja = d } });
+
+  let origen = "peldano", clave = "peldano_"+peldano.n;
+  if(banderas.length && PASO_BANDERA[banderas[0]]){ origen="bandera"; clave=banderas[0] }
+  else if(peldano.n>=3 && PASO_DIMENSION[dimFloja]){ origen="dimension"; clave=dimFloja }
+
+  const paso = origen==="bandera" ? PASO_BANDERA[clave]
+             : origen==="dimension" ? PASO_DIMENSION[clave]
+             : peldano.paso;
+
+  return {frecuencia,profundidad,configuracion,diagnostico,verificacion,base,
+          matriz,sumaMatriz,filas,sumaConfigMatriz,cerosMatriz,
+          continuidad,orden,avanzado,total,peldano,banderas,
+          dimFloja,pasoOrigen:origen,pasoClave:clave,paso};
+}
+
+/* ---------- resultado ---------- */
+
+function renderResultado(){
+  const r = resultado;
+  const p = r.peldano;
+  nav.hidden = true;
+
+  const mapa = PELDANOS.map(x=>`
+    <div class="mapa-seg${x.n===p.n?" here":""}">
+      <div class="mapa-bar" style="background:${x.color}"></div>
+      <div class="mapa-lbl">${esc(x.nombre)}</div>
+    </div>`).join("");
+
+  shell.innerHTML = `
+  <div style="padding-top:30px">
+    <div class="result-hero" style="background:${p.color};color:${p.texto}">
+      <div class="kicker">Tu punto en el recorrido</div>
+      <span class="num">${p.n}</span>
+      <div class="peldano">${esc(p.nombre)}</div>
+    </div>
+
+    <div class="card">
+      <p style="font-size:1.05rem;margin:0">${esc(p.cuerpo)}</p>
+    </div>
+
+    <div class="paso">
+      <h3>Tu siguiente paso</h3>
+      <p>${esc(r.paso)}</p>
+    </div>
+
+    <div class="card">
+      <h3>El recorrido completo</h3>
+      <div class="mapa">${mapa}</div>
+      <p style="font-size:.88rem;color:var(--ink-sec);margin:8px 0 0">
+        Cada persona arranca desde donde está, y ese punto de partida es el comienzo del recorrido.</p>
+    </div>
+
+    <div class="envio" id="envio">Guardando tu respuesta…</div>
+    <p class="firma">Gracias por el tiempo.<br><span class="script">Conecto</span></p>
+  </div>`;
+
+  enviar();
+}
+
+/* ---------- envío ---------- */
+
+function payload(){
+  const r = resultado;
+  const nombreOp = (id,i)=>{const q=Q.find(x=>x.id===id);return (i===undefined||!q.ops[i])?"":q.ops[i].t};
+  const listaOps = (id)=>{const q=Q.find(x=>x.id===id);return (R[id]||[]).map(i=>q.ops[i].t).join(" | ")};
+
+  return {
+    timestamp:new Date().toISOString(),
+    nombre:R.nombre||"", mail:(R.mail||"").toLowerCase(),
+    area:R.area||"", cargo:R.cargo||"",
+
+    p3_frecuencia:nombreOp("p3",R.p3),
+    p4_profundidad:listaOps("p4"), p4_otra:R.p4_otra||"", p4_ejemplo:R.p4_ejemplo||"",
+    p4_cantidad_tareas:(R.p4||[]).length,
+    p5_configuracion:nombreOp("p5",R.p5), p5_otra:R.p5_otra||"", p5_ejemplo:R.p5_ejemplo||"",
+    p6_diagnostico:nombreOp("p6",R.p6), p6_otra:R.p6_otra||"",
+    p7_verificacion:nombreOp("p7",R.p7), p7_otra:R.p7_otra||"", p7_ejemplo:R.p7_ejemplo||"",
+
+    ...Object.fromEntries(Array.from({length:15},(_,k)=>
+      ["p8_f"+String(k+1).padStart(2,"0"), (R.p8||{})[k+1]])),
+    p8_suma:r.sumaMatriz, p8_abierta:R.p8_abierta||"", p8_ejemplo:R.p8_ejemplo||"",
+
+    p9_continuidad:nombreOp("p9",R.p9), p9_otra:R.p9_otra||"", p9_ejemplo:R.p9_ejemplo||"",
+    p10_orden:nombreOp("p10",R.p10), p10_otra:R.p10_otra||"", p10_ejemplo:R.p10_ejemplo||"",
+    p11_autonomia:nombreOp("p11",R.p11), p11_otra:R.p11_otra||"",
+    p12_superficies:listaOps("p12"), p12_otra:R.p12_otra||"",
+
+    p13_herramientas:(R.p13||[]).filter(x=>x!=="__otra").join(" | "),
+    p13_otra:R.p13_otra||"", p13_ninguna:!!R.p13_ninguna, p13_mas_usada:R.p13_mas||"",
+    p14_acceso:listaOps("p14"), p14_otra:R.p14_otra||"",
+    p15_datos:listaOps("p15"), p15_otra:R.p15_otra||"",
+    p16_recomendacion:R.p16||"", p17_tarea_deseada:R.p17||"",
+
+    dim_frecuencia:r.frecuencia, dim_profundidad:r.profundidad,
+    dim_configuracion:r.configuracion, dim_diagnostico:r.diagnostico,
+    dim_verificacion:r.verificacion, puntaje_base:r.base,
+    dim_matriz:r.matriz, dim_continuidad:r.continuidad, dim_orden:r.orden,
+    puntaje_avanzado:r.avanzado, puntaje_total:r.total,
+    peldano_num:r.peldano.n, peldano_nombre:r.peldano.nombre,
+    banderas:r.banderas.join(" | "),
+    dimension_mas_floja:r.dimFloja,
+    paso_origen:r.pasoOrigen, paso_clave:r.pasoClave
+  };
+}
+
+async function enviar(){
+  const data = payload();
+  const box = $("#envio");
+  try{ localStorage.setItem("barometro_divino", JSON.stringify(data)) }catch(e){}
+
+  if(!ENDPOINT){
+    box.textContent = "Modo local: la respuesta quedó en este navegador.";
+    console.log("[barómetro] payload", data);
+    return;
+  }
+  try{
+    const res = await fetch(ENDPOINT,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},   // request simple, sin preflight
+      body:JSON.stringify(data)
+    });
+    const j = await res.json().catch(()=>({}));
+    if(!res.ok || !j.ok) throw new Error(j.error || res.status);
+    box.textContent = "Tu respuesta quedó registrada.";
+  }catch(e){
+    box.className = "envio err";
+    box.textContent = "Tu resultado está calculado y guardado en este navegador. El envío falló: avisale a quien te compartió el link.";
+    console.error("[barómetro] envío", e);
+  }
+}
+
+/* ---------- navegación ---------- */
+
+btnNext.addEventListener("click",()=>{
+  if(paso>0 && paso<=TOTAL && !validar(Q[paso-1])) return;
+  if(paso===TOTAL){ resultado = calcular(); paso++; return render() }
+  paso++; render();
+});
+btnBack.addEventListener("click",()=>{ if(paso>0){paso--; render()} });
+
+render();
+</script>
+</body>
+</html>
