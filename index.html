@@ -159,6 +159,13 @@ button.btn{
 .aviso{color:#B3261E;font-size:.88rem;font-weight:600;margin-top:10px;display:none}
 .aviso.on{display:block}
 
+/* ---------- errores de validación ---------- */
+input.invalid,textarea.invalid{border-color:#B3261E;background:#FFF8F7}
+.opts.invalid .opt{border-color:#E6B3AE}
+.fila.invalid{border-color:#B3261E;background:#FFF8F7}
+.err{color:#B3261E;font-size:.86rem;font-weight:600;margin-top:7px}
+.opts + .err{margin:-2px 0 12px}
+
 /* ---------- resultado ---------- */
 .result-hero{border-radius:var(--radius);padding:34px 28px;margin-bottom:22px;box-shadow:var(--shadow-md);text-align:center}
 .result-hero .kicker{font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:10px}
@@ -228,23 +235,25 @@ const ENDPOINT = "https://script.google.com/macros/s/AKfycby9d2H8mrarN-8ljW3xDh6
 
 /* ---------- contenido de las preguntas ---------- */
 
-const OTRA = {t:"Otra — contame cuál", v:0, otra:true};
+const OTRA = {t:"Otra — contanos cuál", v:0, otra:true};
 
 const Q = [
 
 /* 1 */ {id:"identidad", tipo:"campos", eyebrow:"Identificación",
   t:"¿Quién sos?",
-  hint:"El correo es lo que une tu respuesta de hoy con la del cierre del proceso.",
+  hint:"Usá el mismo correo cuando repitas el formulario al cierre del proceso: es lo que une las dos respuestas.",
   campos:[
     {id:"nombre", label:"Nombre y apellido", ph:"Nombre y apellido"},
-    {id:"mail",   label:"Tu correo de Divino", ph:"nombre@empresa.com", mail:true}
+    {id:"mail",   label:"Tu correo", ph:"tu@correo.com", mail:true}
   ]},
 
 /* 2 */ {id:"area", tipo:"texto", eyebrow:"Identificación",
-  t:"¿En qué área trabajás?", hint:"Escribilo como lo dirías vos.", ph:"Tu área", req:true},
+  t:"¿En qué área trabajás?", hint:"Escribilo como lo dirías vos.", ph:"Tu área", req:true,
+  err:"Escribí tu área para seguir."},
 
 /* 3 */ {id:"cargo", tipo:"texto", eyebrow:"Identificación",
-  t:"¿Cuál es tu cargo?", hint:"Escribilo como lo dirías vos.", ph:"Tu cargo", req:true},
+  t:"¿Cuál es tu cargo?", hint:"Escribilo como lo dirías vos.", ph:"Tu cargo", req:true,
+  err:"Escribí tu cargo para seguir."},
 
 /* 4 · P3 frecuencia — sin opción abierta: las opciones cubren el espacio de días */
 {id:"p3", tipo:"radio", eyebrow:"Tu semana", dim:"frecuencia",
@@ -376,7 +385,7 @@ const Q = [
     {t:"Tengo nomenclatura y descripciones de qué contiene cada documento",v:2,alta:true},
     OTRA
   ],
-  ejemplo:{cuando:(v,op)=>!!(op&&op.alta), label:"Dame un ejemplo de cómo nombrás un archivo.",
+  ejemplo:{cuando:(v,op)=>!!(op&&op.alta), label:"Escribí un ejemplo de cómo nombrás un archivo.",
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Un nombre de archivo tuyo"}},
 
 /* 12 · P11 autonomía — bandera, sin puntaje */
@@ -590,7 +599,7 @@ function bloqueOps(q,tipo){
       <span class="mark ${tipo}"></span>
       <span class="opt-txt">${esc(op.t)}</span></label>`;
     if(op.otra) h += `<div class="otro-wrap${on?" on":""}" id="ow-${i}">
-      <input type="text" id="otro-${i}" placeholder="Contanos cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>`;
+      <input type="text" id="otro-${i}" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>`;
   });
   return h+`</div>`;
 }
@@ -608,11 +617,11 @@ function bloqueHerramientas(q){
     });
     h += `</div>`;
   });
-  h += `<div class="grupo">Cierre</div><div class="opts">
+  h += `<div class="opts" id="tools-fin" style="margin-top:22px">
     <label class="opt tool${sel.includes("__otra")?" sel":""}" data-name="__otra">
-      <span class="mark check"></span><span class="opt-txt">Otra — contame cuál</span></label>
+      <span class="mark check"></span><span class="opt-txt">${esc(OTRA.t)}</span></label>
     <div class="otro-wrap${sel.includes("__otra")?" on":""}" id="ow-tool">
-      <input type="text" id="otro-tool" placeholder="Contanos cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>
+      <input type="text" id="otro-tool" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>
     <label class="opt${nin?" sel":""}" id="ninguna">
       <span class="mark check"></span><span class="opt-txt">${esc(q.ninguna)}</span></label>
   </div>`;
@@ -651,7 +660,8 @@ function bloqueMatriz(q){
 
 function cablear(q){
   const aviso = $("#aviso");
-  const limpiar = ()=>aviso.classList.remove("on");
+  // corre después de despejar(), que saca la marca del campo tocado
+  const limpiar = ()=>setTimeout(()=>{ if(!shell.querySelector(".invalid")) aviso.classList.remove("on") });
 
   if(q.tipo==="campos"){
     q.campos.forEach((c,i)=>{
@@ -800,36 +810,119 @@ function progMatriz(){
     + `<span class="mprog">${n===15?"las 15 respondidas":`${n} de 15 respondidas`}</span>`;
 }
 
-/* ---------- validación ---------- */
+/* ---------- validación ----------
+   Cada error se marca en su campo, con el mensaje debajo, y la pantalla va
+   hasta el primero. La marca se despeja cuando la persona toca ese campo.
+   Obligatorio: todo, salvo las dos abiertas finales y la fila abierta de P8.
+   El texto de «Otra» y el ejemplo son obligatorios cuando aparecen. */
+
+const MIN_EJEMPLO = 10;   // caracteres: una línea corta alcanza
+
+function limpiarErrores(){
+  shell.querySelectorAll(".invalid").forEach(e=>e.classList.remove("invalid"));
+  shell.querySelectorAll(".err").forEach(e=>e.remove());
+  $("#aviso").classList.remove("on");
+}
+
+function despejar(t){
+  const inv = t.closest && t.closest(".invalid");
+  if(!inv) return;
+  inv.classList.remove("invalid");
+  const s = inv.nextElementSibling;
+  if(s && s.classList.contains("err")) s.remove();
+  if(inv.classList.contains("fila")) avisoMatriz();
+}
+
+/* el aviso de la matriz cuenta en vivo las filas que siguen marcadas */
+function avisoMatriz(){
+  const a = $("#aviso"), n = shell.querySelectorAll(".fila.invalid").length;
+  if(!n){ a.classList.remove("on"); return }
+  a.textContent = n===1
+    ? "Queda una fila sin responder: está marcada en rojo."
+    : `Quedan ${n} filas sin responder: están marcadas en rojo.`;
+  a.classList.add("on");
+}
 
 function validar(q){
-  const falta = m=>{const a=$("#aviso");a.textContent=m;a.classList.add("on");return false};
+  limpiarErrores();
+  const errs = [];
+  const marcar = (el,msg)=>{
+    if(!el) return;
+    el.classList.add("invalid");
+    if(msg){
+      const d = document.createElement("div");
+      d.className = "err"; d.textContent = msg;
+      el.insertAdjacentElement("afterend",d);
+    }
+    errs.push(el);
+  };
+  const MSG_OTRA = "Escribí cuál es tu otra opción.";
+
   if(q.tipo==="campos"){
-    for(const c of q.campos){
-      if(!R[c.id]) return falta(`Completá «${c.label}» para seguir.`);
-      if(c.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(R[c.id]))
-        return falta("Revisá el correo: le falta algo para estar completo.");
-    }
-    return true;
+    const nom = R.nombre||"", mail = R.mail||"";
+    if(!nom) marcar($("#c-nombre"),"Escribí tu nombre y apellido.");
+    else if(nom.split(/\s+/).length<2) marcar($("#c-nombre"),"Sumá tu apellido.");
+    if(!mail) marcar($("#c-mail"),"Escribí tu correo.");
+    else if(!mail.includes("@")) marcar($("#c-mail"),"Al correo le falta la @.");
+    else if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail))
+      marcar($("#c-mail"),"Revisá el correo: tiene que quedar como nombre@dominio.com.");
   }
-  if(q.tipo==="texto")  return R[q.id] ? true : falta("Completá este campo para seguir.");
-  if(q.tipo==="largo")  return true;                      // opcionales
-  if(q.tipo==="radio")  return R[q.id]!==undefined ? true : falta("Elegí una opción para seguir.");
-  if(q.tipo==="multi"){
-    if(q.grupos){
-      const marcadas = (R[q.id]||[]).filter(x=>x!=="__otra").length + ((R[q.id]||[]).includes("__otra")?1:0);
-      if(!marcadas && !R[q.id+"_ninguna"]) return falta("Marcá al menos una, o «Todavía ninguna».");
-      if(marcadas>1 && !R.p13_mas) return falta("Elegí cuál de las que marcaste usás más.");
-      if(marcadas===1 && !R.p13_mas){
-        const u=(R[q.id]||[]).filter(x=>x!=="__otra"); R.p13_mas = u.length?u[0]:(R[q.id+"_otra"]||"");
-      }
-      return true;
-    }
-    return (R[q.id]||[]).length ? true : falta("Marcá al menos una opción para seguir.");
+
+  if(q.tipo==="texto" && (R[q.id]||"").length<2)
+    marcar($("#in"), q.err||"Completá este campo para seguir.");
+
+  if(q.tipo==="radio"){
+    const i = R[q.id];
+    if(i===undefined) marcar(shell.querySelector(".opts"),"Elegí una opción para seguir.");
+    else if(q.ops[i].otra && !R[q.id+"_otra"]) marcar($("#otro-"+i),MSG_OTRA);
   }
+
+  if(q.tipo==="multi" && !q.grupos){
+    const arr = R[q.id]||[];
+    const iOtra = q.ops.findIndex(o=>o.otra);
+    if(!arr.length) marcar(shell.querySelector(".opts"),"Marcá al menos una opción para seguir.");
+    else if(arr.includes(iOtra) && !R[q.id+"_otra"]) marcar($("#otro-"+iOtra),MSG_OTRA);
+  }
+
+  if(q.tipo==="multi" && q.grupos){
+    const arr = R[q.id]||[];
+    const marcadas = arr.filter(x=>x!=="__otra").length + (arr.includes("__otra")?1:0);
+    if(!marcadas && !R[q.id+"_ninguna"])
+      marcar($("#tools-fin"),"Marcá al menos una herramienta, o «Todavía ninguna».");
+    if(arr.includes("__otra") && !R[q.id+"_otra"])
+      marcar($("#otro-tool"),"Escribí qué otra herramienta usás.");
+    if(marcadas>1 && !R.p13_mas) marcar($("#sub-ops"),"Elegí cuál usás más.");
+    if(marcadas===1 && !R.p13_mas){
+      const u = arr.filter(x=>x!=="__otra"); R.p13_mas = u.length?u[0]:(R[q.id+"_otra"]||"");
+    }
+  }
+
   if(q.tipo==="matriz"){
-    const n = Object.keys(R.p8||{}).length;
-    return n===15 ? true : falta(`Te faltan ${15-n} filas. Cada una tiene respuesta útil, incluida «todavía no lo conozco».`);
+    const faltan = [];
+    for(let f=1;f<=15;f++) if((R.p8||{})[f]===undefined) faltan.push(f);
+    faltan.forEach(f=>marcar(shell.querySelector(`.fila[data-fila="${f}"]`)));
+    if(faltan.length){
+      const a = $("#aviso");
+      a.textContent = faltan.length===1
+        ? "Queda una fila sin responder: está marcada en rojo."
+        : `Quedan ${faltan.length} filas sin responder: están marcadas en rojo.`;
+      a.classList.add("on");
+    }
+  }
+
+  // el ejemplo, cuando aparece, es obligatorio
+  const ej = $("#ej");
+  if(ej && ej.classList.contains("on")){
+    const v = R[q.id+"_ejemplo"]||"";
+    if(!v) marcar($("#ej-in"),"Escribí el ejemplo para seguir: una línea alcanza.");
+    else if(v.length<MIN_EJEMPLO) marcar($("#ej-in"),"Sumá un poco más de detalle: una línea alcanza.");
+  }
+
+  if(errs.length){
+    const el = errs[0];
+    el.scrollIntoView({behavior:"smooth",block:"center"});
+    if(el.matches("input,textarea")) el.focus({preventScroll:true});
+    return false;
   }
   return true;
 }
@@ -1052,6 +1145,10 @@ btnNext.addEventListener("click",()=>{
   paso++; render();
 });
 btnBack.addEventListener("click",()=>{ if(paso>0){paso--; render()} });
+
+/* la marca de error se despeja en cuanto la persona toca el campo marcado */
+shell.addEventListener("input",e=>despejar(e.target));
+shell.addEventListener("click",e=>despejar(e.target));
 
 render();
 </script>
