@@ -143,7 +143,10 @@ label.fl{display:block;font-weight:600;font-size:.9rem;margin-bottom:7px;color:v
 .item-body{display:none;padding:0 16px 16px 50px}
 .item.open .item-body{display:block;animation:in .2s ease}
 
-.escala{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.escala{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.escala.tres{grid-template-columns:repeat(3,1fr)}
+.escala.invalid .esc{border-color:#E6B3AE}
+.uso{margin-top:14px}
 .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
 .chips:last-child{margin-bottom:0}
 .sub-lbl{font-size:.85rem;font-weight:700;color:var(--ink);margin:2px 0 8px}
@@ -283,7 +286,7 @@ const Q = [
 /* 1 · nombre, correo, área y cargo en una sola pantalla */
 {id:"identidad", tipo:"campos", eyebrow:"Vamos a conocernos",
   t:"¿Quién sos y dónde trabajás?",
-  hint:"Con estos datos armamos los grupos. Usá el mismo correo cuando repitas el formulario al cierre del proceso: es lo que une las dos respuestas.",
+  hint:"Con estos datos te vamos a poder identificar, junto a tu nivel del barómetro. Es importante que uses el mismo correo cuando repitas el formulario al cierre del proceso: es lo que une las dos respuestas.",
   campos:[
     {id:"nombre", label:"Nombre y apellido", ph:"Nombre y apellido", ac:"name", cap:"words"},
     {id:"mail",   label:"Tu correo", ph:"tu@correo.com", mail:true, ac:"email", cap:"off"},
@@ -303,12 +306,15 @@ const Q = [
   t:"¿Cuáles de estas cosas hiciste con IA en el último mes?",
   hint:"Marcá todas las que apliquen.",
   ops:[
+    {t:"Hacerle preguntas, como a un buscador tipo Google",v:1,
+      sigue:{id:"p4_google", t:"Comparada con Google, ¿cómo te resulta?",
+        ops:["Me responde mejor","Responde parecido, y me gusta más","Prefiero Google"]}},
     {t:"Traducir o corregir un texto",v:1},
     {t:"Resumir un documento largo",v:1},
-    {t:"Redactar un mail o un informe desde cero",v:2},
+    {t:"Redactar un mail o un informe",v:2},
     {t:"Analizar una planilla o un conjunto de datos",v:2},
     {t:"Preparar una presentación completa",v:2},
-    {t:"Pensar una decisión difícil conversando con la IA",v:3},
+    {t:"Pensar una decisión conversando con la IA",v:3},
     {t:"Armar algo que se ejecuta solo cada vez que hace falta",v:4},
     OTRA
   ],
@@ -319,7 +325,7 @@ const Q = [
 {id:"p5", tipo:"radio", eyebrow:"Cómo la tenés armada", dim:"configuracion",
   t:"¿Creaste alguna vez un proyecto o espacio con instrucciones que reutilizás?",
   ops:[
-    {t:"Todavía no sé qué es eso",v:0},
+    {t:"No sé qué es eso",v:0},
     {t:"Sé qué es y todavía no lo usé",v:1},
     {t:"Lo probé una vez",v:2},
     {t:"Tengo uno o dos proyectos que uso",v:3},
@@ -343,29 +349,31 @@ const Q = [
 
 /* 6 · P7 verificación */
 {id:"p7", tipo:"radio", eyebrow:"Antes de usarlo", dim:"verificacion",
-  t:"Antes de usar en el trabajo algo que te devolvió la IA:",
+  t:"¿Qué hacés con las respuestas que te devuelve la IA antes de usarlas en tu trabajo?",
   ops:[
-    {t:"Lo uso como viene",v:0},
-    {t:"Le ajusto la redacción",v:1},
-    {t:"Lo reviso con lo que sé del tema",v:2},
+    {t:"En general, las uso como vienen",v:0},
+    {t:"Les ajusto la redacción",v:1},
+    {t:"Las reviso con lo que sé del tema",v:2},
     {t:"Verifico los datos contra la fuente",v:3},
-    {t:"Le pido que muestre de dónde salió cada cosa y lo chequeo",v:4},
+    {t:"Le pido a la IA que muestre de dónde salió cada cosa, y lo chequeo",v:4},
     OTRA
   ],
   ejemplo:{cuando:v=>v>=3, label:"Contá la última vez que encontraste un error así.",
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Qué encontraste y cómo"}},
 
 /* 7 · P8 matriz */
-{id:"p8", tipo:"matriz", eyebrow:"El mapa de lo que existe",
-  t:"Conceptos y prácticas",
-  head:"Marcá, para cada una, si sabés qué es y cuánto la usás.",
+{id:"p8", tipo:"matriz", eyebrow:"Conceptos y prácticas",
+  t:"¿Cuánto sabés sobre estos conceptos de IA?",
+  head:"Para cada uno, contanos si sabés qué es. Si lo conocés, marcá cuánto lo usás.",
   subProgreso:()=>`${Object.keys(R.p8||{}).length} de 15 preguntas`,
-  escala:[
-    {t:"No sé qué es",v:0},
-    {t:"Sé qué es",v:1},
-    {t:"Alguna vez",v:2},
-    {t:"Habitualmente",v:3}
-  ],
+  /* dos tiempos: «Sé qué es» abre la pregunta de uso. Valores 0 a 3, iguales a antes */
+  escala:{
+    no:{t:"No sé qué es",v:0},
+    si:{t:"Sé qué es"},
+    usoLbl:"¿Cuánto lo usás?",
+    uso:[{t:"Nunca",v:1},{t:"Alguna vez",v:2},{t:"Habitualmente",v:3}]
+  },
+  nombreFila:{10:"Skills",11:"Conectores o MCP",12:"Agentes"},
   grupos:[
     {g:"Configuración de la herramienta", filas:[
       "Instrucciones tuyas guardadas a nivel de cuenta, que aplican a todas tus conversaciones",
@@ -399,7 +407,7 @@ const Q = [
      skills (10), conectores (11) o agentes (12) */
   ejemploFilas:[10,11,12],
   ejemplo:{label:"Contá para qué lo usás.",
-    why:"Marcaste que usás habitualmente skills, conectores o agentes.", ph:"Para qué lo usás"}},
+    why:"", ph:"Para qué lo usás"}},
 
 /* 8 · P9 dónde queda */
 {id:"p9", tipo:"radio", eyebrow:"Dónde lo guardás", dim:"continuidad",
@@ -651,6 +659,13 @@ function bloqueOps(q,tipo){
       <span class="opt-txt">${esc(op.t)}</span></label>`;
     if(op.otra) h += `<div class="otro-wrap${on?" on":""}" id="ow-${i}">
       <input type="text" id="otro-${i}" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>`;
+    if(op.sigue){                      // pregunta que se abre al marcar esta opción
+      const sv = R[op.sigue.id];
+      h += `<div class="otro-wrap${on?" on":""}" id="sg-${i}">
+        <div class="sub-lbl">${esc(op.sigue.t)}</div>
+        <div class="chips" data-sigue="${i}">${op.sigue.ops.map((t,k)=>
+          `<button type="button" class="chip${sv===k?" sel":""}" data-k="${k}">${esc(t)}</button>`).join("")}</div></div>`;
+    }
   });
   return h+`</div>`;
 }
@@ -701,12 +716,17 @@ function bloqueMatriz(q){
     h += `<div class="grupo">${esc(gr.g)}</div>`;
     gr.filas.forEach(f=>{
       n++;
-      const v = vals[n];
-      const resp = v!==undefined ? q.escala.find(e=>e.v===v).t : "";
-      h += itemHtml(n, f, resp, v!==undefined, UI.p8===n,
-        `<div class="escala">${q.escala.map(e=>
-          `<button type="button" class="esc${v===e.v?" sel":""}" data-fila="${n}" data-v="${e.v}">${esc(e.t)}</button>`
-        ).join("")}</div>`);
+      const v = vals[n], sabe = v>=1 || !!(UI.p8sabe||{})[n];
+      h += itemHtml(n, f, respMatriz(q,v), v!==undefined, UI.p8===n,
+        `<div class="escala">
+           <button type="button" class="esc${v===0?" sel":""}" data-fila="${n}" data-r="no">${esc(q.escala.no.t)}</button>
+           <button type="button" class="esc${sabe?" sel":""}" data-fila="${n}" data-r="si">${esc(q.escala.si.t)}</button>
+         </div>
+         <div class="uso"${sabe?"":" hidden"}>
+           <div class="sub-lbl">${esc(q.escala.usoLbl)}</div>
+           <div class="escala tres">${q.escala.uso.map(u=>
+             `<button type="button" class="esc${v===u.v?" sel":""}" data-fila="${n}" data-v="${u.v}">${esc(u.t)}</button>`).join("")}</div>
+         </div>`);
     });
   });
   h += `</div>
@@ -716,6 +736,11 @@ function bloqueMatriz(q){
       <input type="text" id="p8-abierta" placeholder="${esc(q.abierta.ph)}" value="${esc(R.p8_abierta||"")}">
     </div>`;
   return h;
+}
+
+function respMatriz(q,v){
+  if(v===undefined) return "";
+  return v===0 ? q.escala.no.t : `${q.escala.si.t} · ${q.escala.uso.find(u=>u.v===v).t}`;
 }
 
 function bloqueDetalle(q){
@@ -768,7 +793,10 @@ function cablear(q){
         shell.querySelectorAll(".otro-wrap").forEach(w=>w.classList.remove("on"));
         if(q.ops[i].otra){
           const w = $("#ow-"+i); w.classList.add("on"); $("#otro-"+i).focus();
-        } else { R[q.id+"_otra"] = ""; }
+        } else {                       // al cambiar de opción, el texto de «Otra» se borra
+          R[q.id+"_otra"] = "";
+          shell.querySelectorAll('[id^="otro-"]').forEach(x=>x.value="");
+        }
         toggleEjemplo(q); limpiar();
       });
     });
@@ -785,10 +813,24 @@ function cablear(q){
         if(q.ops[i].otra){
           const w = $("#ow-"+i);
           w.classList.toggle("on",arr.includes(i));
-          if(arr.includes(i)) $("#otro-"+i).focus(); else R[q.id+"_otra"]="";
+          if(arr.includes(i)) $("#otro-"+i).focus(); else { R[q.id+"_otra"]=""; $("#otro-"+i).value="" }
+        }
+        if(q.ops[i].sigue){
+          $("#sg-"+i).classList.toggle("on",arr.includes(i));
+          if(!arr.includes(i)){
+            delete R[q.ops[i].sigue.id];
+            $("#sg-"+i).querySelectorAll(".chip").forEach(c=>c.classList.remove("sel"));
+          }
         }
         toggleEjemplo(q); limpiar();
       });
+    });
+    shell.querySelectorAll(".chips[data-sigue]").forEach(ch=>{
+      const s = q.ops[+ch.dataset.sigue].sigue;
+      ch.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>{
+        R[s.id] = +b.dataset.k;
+        ch.querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x===b));
+      }));
     });
   }
 
@@ -798,13 +840,26 @@ function cablear(q){
     R.p8 = R.p8||{};
     const cont = $("#acc");
     cablearAcordeon(cont,q.id);
+    UI.p8sabe = UI.p8sabe || {};
     cont.querySelectorAll(".esc").forEach(b=>{
       b.addEventListener("click",()=>{
-        const it = b.closest(".item");
-        R.p8[+b.dataset.fila] = +b.dataset.v;
-        b.parentNode.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
-        it.querySelector(".item-resp").textContent = b.textContent;
-        completarItem(cont,q.id,it);
+        const it = b.closest(".item"), f = +b.dataset.fila, uso = it.querySelector(".uso");
+        const resp = ()=>{ it.querySelector(".item-resp").textContent = respMatriz(q,R.p8[f]) };
+        if(b.dataset.r==="no"){                 // no sabe qué es: 0, y se cierra
+          R.p8[f] = 0; delete UI.p8sabe[f]; uso.hidden = true;
+          it.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
+          resp(); completarItem(cont,q.id,it);
+        } else if(b.dataset.r==="si"){          // sabe qué es: se abre cuánto lo usa
+          UI.p8sabe[f] = true;
+          if(R.p8[f]===0) delete R.p8[f];
+          it.querySelector('[data-r="no"]').classList.remove("sel");
+          b.classList.add("sel"); uso.hidden = false;
+          resp(); marcarEstado(it, R.p8[f]!==undefined);
+        } else {                                // cuánto lo usa: 1 a 3, y se cierra
+          R.p8[f] = +b.dataset.v;
+          uso.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
+          resp(); completarItem(cont,q.id,it);
+        }
         toggleEjemplo(q); actualizarContador(q);
       });
     });
@@ -855,7 +910,7 @@ function cablearHerramientas(q){
       if(name==="__otra"){
         const w = $("#ow-tool");
         w.classList.toggle("on",arr.includes("__otra"));
-        if(arr.includes("__otra")) $("#otro-tool").focus(); else R[q.id+"_otra"]="";
+        if(arr.includes("__otra")) $("#otro-tool").focus(); else { R[q.id+"_otra"]=""; $("#otro-tool").value="" }
       }
       actualizarContador(q);   // el total de pasos cambia si aparece o se va el detalle
     });
@@ -866,7 +921,7 @@ function cablearHerramientas(q){
     R[q.id+"_ninguna"] = on;
     $("#ninguna").classList.toggle("sel",on);
     if(on){
-      R[q.id]=[]; R[q.id+"_otra"]="";
+      R[q.id]=[]; R[q.id+"_otra"]=""; $("#otro-tool").value="";
       shell.querySelectorAll(".opt.tool").forEach(o=>o.classList.remove("sel"));
       $("#ow-tool").classList.remove("on");
     }
@@ -911,22 +966,36 @@ function completarItem(cont,key,it){
   abrir(cont,key,siguientePendiente(cont,+it.dataset.item));
 }
 
+/* El ejemplo nombra la opción que lo pidió. Si esa opción cambia o se desmarca,
+   el texto escrito ya no corresponde y se borra. */
 function toggleEjemplo(q){
   const box = $("#ej"); if(!box) return;
-  let mostrar = false;
+  let motivo = "", clave = "";
   if(q.tipo==="radio"){
     const i = R[q.id];
-    if(i!==undefined && q.ops[i] && !q.ops[i].otra) mostrar = q.ejemplo.cuando(q.ops[i].v,q.ops[i]);
+    if(i!==undefined && q.ops[i] && !q.ops[i].otra && q.ejemplo.cuando(q.ops[i].v,q.ops[i])){
+      motivo = `Marcaste «${q.ops[i].t}».`; clave = "op"+i;
+    }
   }
   if(q.tipo==="multi"){
-    const arr = R[q.id]||[];
-    const max = arr.reduce((m,i)=>q.ops[i].otra?m:Math.max(m,q.ops[i].v),0);
-    mostrar = arr.length>0 && q.ejemplo.cuando(max);
+    const arr = (R[q.id]||[]).filter(i=>!q.ops[i].otra);
+    const top = arr.reduce((b,i)=>b===null||q.ops[i].v>q.ops[b].v?i:b,null);
+    if(top!==null && q.ejemplo.cuando(q.ops[top].v)){
+      motivo = `Marcaste «${q.ops[top].t}».`; clave = "op"+top;
+    }
   }
   if(q.tipo==="matriz"){
-    mostrar = q.ejemploFilas.some(f=>R.p8 && R.p8[f]===3);
+    const filas = q.ejemploFilas.filter(f=>R.p8 && R.p8[f]===3);
+    if(filas.length){
+      motivo = `Marcaste que usás habitualmente: ${filas.map(f=>q.nombreFila[f]).join(", ")}.`;
+      clave = "matriz";
+    }
   }
-  box.classList.toggle("on",mostrar);
+  const antes = box.dataset.clave;
+  if(antes && antes!==clave){ R[q.id+"_ejemplo"] = ""; $("#ej-in").value = ""; }
+  box.dataset.clave = clave;
+  box.querySelector(".why").textContent = motivo;
+  box.classList.toggle("on",!!clave);
 }
 
 /* ---------- validación ----------
@@ -1006,6 +1075,10 @@ function validar(q){
     const iOtra = q.ops.findIndex(o=>o.otra);
     if(!arr.length) marcar(shell.querySelector(".opts"),"Marcá al menos una opción para seguir.");
     else if(arr.includes(iOtra) && !R[q.id+"_otra"]) marcar($("#otro-"+iOtra),MSG_OTRA);
+    arr.forEach(i=>{
+      const s = q.ops[i].sigue;
+      if(s && R[s.id]===undefined) marcar(shell.querySelector(`.chips[data-sigue="${i}"]`),"Elegí una opción.");
+    });
   }
 
   if(q.tipo==="multi" && q.grupos){
@@ -1025,6 +1098,8 @@ function validar(q){
     if(pend.length){
       const primero = pend[0];
       abrir(cont,q.id,+primero.dataset.item);
+      if(q.tipo==="matriz" && (UI.p8sabe||{})[+primero.dataset.item])
+        marcar(primero.querySelector(".uso .escala"),"Elegí cuánto lo usás.");
       if(q.tipo==="detalle"){
         const d = (R.det||{})[herramientasConDetalle()[+primero.dataset.item-1]] || {sup:[]};
         if(!d.sup.length) marcar(primero.querySelector('.chips[data-q="sup"]'),"Marcá por dónde la usás.");
@@ -1204,7 +1279,11 @@ function renderResultado(){
 function payload(){
   const r = resultado;
   const nombreOp = (id,i)=>{const q=Q.find(x=>x.id===id);return (i===undefined||!q.ops[i])?"":q.ops[i].t};
-  const listaOps = (id)=>{const q=Q.find(x=>x.id===id);return (R[id]||[]).map(i=>q.ops[i].t).join(" | ")};
+  // la respuesta de una pregunta que se abre va entre paréntesis: «Hacerle preguntas… (Me responde mejor)»
+  const listaOps = (id)=>{const q=Q.find(x=>x.id===id);return (R[id]||[]).map(i=>{
+    const op = q.ops[i], s = op.sigue;
+    return s && R[s.id]!==undefined ? `${op.t} (${s.ops[R[s.id]]})` : op.t;
+  }).join(" | ")};
 
   return {
     timestamp:new Date().toISOString(),
