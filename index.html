@@ -1218,7 +1218,8 @@ function calcular(){
   const avanzado = matriz+continuidad+orden;
   const total = Math.round((base+avanzado)*100)/100;
 
-  const peldano = PELDANOS.find(p=>total>=p.min && total<=p.max) || PELDANOS[0];
+  // el total puede tener decimales (la matriz se divide por 3): manda el último corte alcanzado
+  const peldano = [...PELDANOS].reverse().find(p=>total>=p.min) || PELDANOS[0];
 
   /* --- banderas --- */
   const opP11 = opRadio("p11");
