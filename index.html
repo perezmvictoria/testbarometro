@@ -123,21 +123,40 @@ label.fl{display:block;font-weight:600;font-size:.9rem;margin-bottom:7px;color:v
 .matriz-head{background:var(--violet-pale);border-radius:var(--radius);padding:17px 19px;margin-bottom:22px;font-size:.95rem;color:var(--violet-deep)}
 .grupo{font-size:.75rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--violet-mid);margin:24px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--violet-pale)}
 .grupo:first-of-type{margin-top:0}
-.fila{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);padding:15px 16px;margin-bottom:11px;transition:border-color .15s}
-.fila.done{border-color:var(--violet-soft)}
-.fila-txt{font-size:.97rem;line-height:1.45;margin-bottom:12px;display:flex;gap:9px}
-.fila-num{flex:0 0 auto;font-weight:800;color:var(--violet-soft);font-size:.9rem;padding-top:1px}
-.escala{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.esc{
-  font-family:inherit;font-size:.82rem;line-height:1.25;font-weight:500;color:var(--ink-sec);
-  background:var(--surface);border:2px solid var(--border);border-radius:9px;
-  padding:9px 8px;cursor:pointer;text-align:center;transition:all .15s;
+/* acordeón: una pregunta abierta a la vez */
+.item{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);margin-bottom:10px;transition:border-color .15s;scroll-margin-top:100px}
+.item.open{border-color:var(--violet-main);box-shadow:var(--shadow-sm)}
+.item-head{
+  display:flex;align-items:flex-start;gap:12px;width:100%;padding:14px 16px;
+  font-family:inherit;text-align:left;background:none;border:0;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
-.esc:hover{border-color:var(--violet-soft)}
-.esc.sel{background:var(--violet-main);border-color:var(--violet-main);color:var(--white);font-weight:600}
+.item-head:focus-visible{outline:3px solid var(--violet-soft);outline-offset:2px;border-radius:var(--radius)}
+.estado{flex:0 0 22px;height:22px;margin-top:1px;border-radius:50%;border:2px dashed var(--ink-muted);display:flex;align-items:center;justify-content:center}
+.item.done .estado{border:2px solid var(--violet-main);background:var(--violet-main)}
+.item.done .estado::after{content:'';width:5px;height:10px;border:solid var(--white);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.item-txt{flex:1;font-size:.97rem;line-height:1.4;color:var(--ink)}
+.item-resp{display:block;font-size:.8rem;font-weight:700;color:var(--violet-main);margin-top:3px}
+.item-resp:empty,.item.open .item-resp{display:none}
+.chev{flex:0 0 auto;width:9px;height:9px;margin:6px 4px 0 0;border:solid var(--ink-muted);border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .2s}
+.item.open .chev{transform:rotate(-135deg);margin-top:10px}
+.item-body{display:none;padding:0 16px 16px 50px}
+.item.open .item-body{display:block;animation:in .2s ease}
+
+.escala{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.chips:last-child{margin-bottom:0}
+.sub-lbl{font-size:.85rem;font-weight:700;color:var(--ink);margin:2px 0 8px}
+.esc,.chip{
+  font-family:inherit;font-size:.82rem;line-height:1.25;font-weight:500;color:var(--ink-sec);
+  background:var(--surface);border:2px solid var(--border);border-radius:9px;
+  padding:9px 5px;cursor:pointer;text-align:center;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.chip{padding:8px 13px}
+.esc:hover,.chip:hover{border-color:var(--violet-soft)}
+.esc.sel,.chip.sel{background:var(--violet-main);border-color:var(--violet-main);color:var(--white);font-weight:600}
 .bar-count .mprog{display:block;font-weight:700;color:var(--violet-main);font-size:.78rem}
-@media(min-width:600px){.escala{grid-template-columns:repeat(4,1fr)}}
 
 /* ---------- navegación ---------- */
 .nav{
@@ -162,7 +181,9 @@ button.btn{
 /* ---------- errores de validación ---------- */
 input.invalid,textarea.invalid{border-color:#B3261E;background:#FFF8F7}
 .opts.invalid .opt{border-color:#E6B3AE}
-.fila.invalid{border-color:#B3261E;background:#FFF8F7}
+.item.invalid{border-color:#B3261E;background:#FFF8F7}
+.chips.invalid .chip{border-color:#E6B3AE}
+.chips + .err{margin:-8px 0 12px}
 .err{color:#B3261E;font-size:.86rem;font-weight:600;margin-top:7px}
 .opts + .err{margin:-2px 0 12px}
 
@@ -194,6 +215,7 @@ input.invalid,textarea.invalid{border-color:#B3261E;background:#FFF8F7}
   .shell{padding:0 16px 120px}
   .bar-inner{padding:0 16px}
   .intro-card{padding:22px 19px}
+  .item-body{padding:0 14px 14px}
   .result-hero .peldano{font-size:1.9rem}
   .mapa{gap:3px}
   .mapa-lbl{font-size:.6rem}
@@ -236,6 +258,20 @@ const ENDPOINT = "https://script.google.com/macros/s/AKfycby9d2H8mrarN-8ljW3xDh6
 /* ---------- contenido de las preguntas ---------- */
 
 const OTRA = {t:"Otra — contanos cuál", v:0, otra:true};
+
+/* Por dónde se usa cada chat. La IA que viene dentro de productos de trabajo
+   (Rovo, Adobe, Qlik) queda afuera: el acceso lo da el producto. */
+const SUPERFICIES = {
+  "ChatGPT":            ["Navegador","App de escritorio","App del celular","Codex, con acceso a mis archivos"],
+  "Gemini":             ["Navegador","App del celular","Dentro de Gmail, Drive o Docs"],
+  "Claude":             ["Navegador","App de escritorio","App del celular","Claude Code o Cowork, con acceso a mis archivos"],
+  "Copilot":            ["Navegador o app de escritorio","Dentro de Outlook","Dentro de Word, Excel o Teams","App del celular"],
+  "Meta AI o WhatsApp": ["WhatsApp","Instagram o Facebook","Navegador"],
+  "Grok":               ["Dentro de X","Navegador","App del celular"],
+  "DeepSeek":           ["Navegador","App del celular"],
+  "__otra":             ["Navegador","App de escritorio","App del celular","Dentro de otro programa"]
+};
+const CUENTAS = [{t:"De Divino"},{t:"Personal gratis",personal:true},{t:"Personal paga",personal:true}];
 
 const Q = [
 
@@ -317,12 +353,13 @@ const Q = [
 /* 7 · P8 matriz */
 {id:"p8", tipo:"matriz", eyebrow:"El mapa de lo que existe",
   t:"Conceptos y prácticas",
-  head:"Esta lista incluye cosas que muy poca gente usa hoy. Marcar «todavía no lo conozco» es la respuesta más común, y sirve exactamente igual: nos dice qué vale la pena mostrar. Leerla ya te da el mapa de lo que existe.",
+  head:"Marcá, para cada una, si sabés qué es y cuánto la usás.",
+  subProgreso:()=>`${Object.keys(R.p8||{}).length} de 15 preguntas`,
   escala:[
-    {t:"Todavía no lo conozco",v:0},
-    {t:"Sé qué es, todavía sin usarlo",v:1},
-    {t:"Lo usé alguna vez",v:2},
-    {t:"Lo uso habitualmente",v:3}
+    {t:"No sé qué es",v:0},
+    {t:"Sé qué es",v:1},
+    {t:"Alguna vez",v:2},
+    {t:"Habitualmente",v:3}
   ],
   grupos:[
     {g:"Configuración de la herramienta", filas:[
@@ -396,41 +433,27 @@ const Q = [
     OTRA
   ]},
 
-/* 11 · P12 superficies — contexto, sin puntaje */
-{id:"p12", tipo:"multi", eyebrow:"Por dónde entrás",
-  t:"¿Por dónde la usás?", hint:"Marcá todas las que apliquen.",
-  ops:[
-    {t:"La ventana de chat en el navegador",v:0},
-    {t:"La aplicación de escritorio",v:0},
-    {t:"La IA que ya viene dentro de las herramientas que uso — Excel, correo, sistemas internos",v:0},
-    {t:"Un entorno donde la IA trabaja directamente con mis archivos o mi sistema",v:0},
-    OTRA
-  ]},
-
-/* 12 · P13 herramientas + cuál usás más */
-{id:"p13", tipo:"multi", eyebrow:"Qué usás", subq:true,
+/* 11 · P13 herramientas — contexto, sin puntaje */
+{id:"p13", tipo:"multi", eyebrow:"Qué usás",
   t:"¿Qué herramientas de IA usás?", hint:"Marcá todas las que apliquen.",
   grupos:[
     {g:"Chats de uso general", ops:["ChatGPT","Gemini","Claude","Copilot","Meta AI o WhatsApp","Grok","DeepSeek"]},
-    {g:"IA dentro de herramientas que ya usás en Divino", ops:["Copilot en Outlook o en Office","Rovo, la IA de Jira","La IA de la suite Adobe","La IA de Qlik Sense"]}
+    {g:"Programas que traen IA incorporada", ops:["Rovo, la IA de Jira","La IA de Adobe","La IA de Qlik Sense"]}
   ],
-  ninguna:"Todavía ninguna",
-  subLabel:"De las que marcaste, ¿cuál usás más?"},
+  ninguna:"Todavía ninguna"},
 
-/* 13 · P14 acceso — gobernanza, sin puntaje */
-{id:"p14", tipo:"multi", eyebrow:"Cómo accedés",
-  t:"¿Cómo accedés a esas herramientas?",
-  hint:"Marcá todas las que apliquen — es común combinar accesos.",
-  ops:[
-    {t:"Cuenta de Divino",v:0},
-    {t:"Cuenta personal gratuita",v:0,personal:true},
-    {t:"Cuenta personal paga, que pago yo",v:0,personal:true},
-    {t:"Cuenta personal paga, que paga otra persona u otra empresa",v:0,personal:true},
-    {t:"Todavía sin acceso",v:0},
-    OTRA
-  ]},
+/* 12 · P12 + P14 por herramienta: por dónde y con qué cuenta — gobernanza, sin puntaje.
+   Aparece solo si marcó algún chat u «Otra». */
+{id:"p14", tipo:"detalle", eyebrow:"Tus herramientas",
+  t:"¿Cómo usás cada una?", hint:"Abrí cada herramienta y respondé las dos preguntas.",
+  // cuenta como paso hasta que P13 esté respondida: el total baja, nunca sube
+  si:()=>(R.p13===undefined && !R.p13_ninguna) || herramientasConDetalle().length>0,
+  subProgreso:()=>{
+    const l = herramientasConDetalle();
+    return `${l.filter(detalleCompleto).length} de ${l.length} herramientas`;
+  }},
 
-/* 14 · P15 datos — gobernanza, sin puntaje
+/* 13 · P15 datos — gobernanza, sin puntaje
    [PENDIENTE DE INÉS] formulación exacta de las dos filas de sistemas internos
    y las URLs de QlikView / Qlik Sense */
 {id:"p15", tipo:"multi", eyebrow:"Con qué trabajás",
@@ -447,13 +470,13 @@ const Q = [
     OTRA
   ]},
 
-/* 15 · P16 recomendación — abierta, opcional */
+/* 14 · P16 recomendación — abierta, opcional */
 {id:"p16", tipo:"largo", eyebrow:"Tu aporte",
   t:"¿Hay alguna herramienta de IA que uses y que te parezca que le serviría al resto de Divino?",
   hint:"Contanos cuál y para qué. Es opcional.",
   ph:"Cuál y para qué la usarías"},
 
-/* 16 · P17 tarea deseada — abierta, opcional */
+/* 15 · P17 tarea deseada — abierta, opcional */
 {id:"p17", tipo:"largo", eyebrow:"Tu aporte",
   t:"¿Hay alguna tarea de tu trabajo donde te gustaría usar IA y todavía no sabés cómo?",
   hint:"Es opcional, y es de lo más útil para diseñar el programa.",
@@ -499,9 +522,23 @@ const DESEMPATE = ["configuracion","diagnostico","verificacion","continuidad","p
 /* ---------- estado ---------- */
 
 const R = {};              // respuestas crudas
-let paso = 0;              // 0 = intro · 1..TOTAL = preguntas · TOTAL+1 = resultado
-const TOTAL = Q.length;
+let paso = 0;              // 0 = intro · 1..pasos = preguntas · pasos+1 = resultado
+const UI = {};             // qué pieza del acordeón está abierta en cada paso
 let resultado = null;
+
+/* los pasos que aplican: el detalle de herramientas depende de lo marcado */
+const visibles = () => Q.filter(q=>!q.si || q.si());
+
+function herramientasConDetalle(){
+  const marcadas = R.p13||[];
+  return Object.keys(SUPERFICIES).filter(n=>marcadas.includes(n));
+}
+function nombreHerr(n){ return n==="__otra" ? (R.p13_otra||"Otra herramienta") : n }
+function detalleCompleto(n){ const d=(R.det||{})[n]; return !!(d && d.sup.length && d.cuenta!==undefined) }
+function resumenDetalle(n){
+  const d = R.det[n];
+  return SUPERFICIES[n].filter(s=>d.sup.includes(s)).join(", ") + " · " + CUENTAS[d.cuenta].t;
+}
 
 const $ = s => document.querySelector(s);
 const shell = $("#shell"), nav = $("#nav"), bar = $("#bar");
@@ -513,17 +550,24 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 
 function render(){
   window.scrollTo(0,0);
-  bar.hidden = (paso===0 || paso>TOTAL);
-  if(paso>0 && paso<=TOTAL){
-    $("#count").textContent = `Pregunta ${paso} de ${TOTAL}`;
-    $("#fill").style.width = (paso/TOTAL*100)+"%";
-  }
+  const V = visibles(), T = V.length;
+  bar.hidden = (paso===0 || paso>T);
   if(paso===0) return renderIntro();
-  if(paso>TOTAL) return renderResultado();
-  renderPregunta(Q[paso-1]);
+  if(paso>T) return renderResultado();
+  const q = V[paso-1];
+  renderPregunta(q);
+  actualizarContador(q);
   btnBack.hidden = false;
-  btnNext.textContent = paso===TOTAL ? "Ver mi resultado" : "Siguiente";
+  btnNext.textContent = paso===T ? "Ver mi resultado" : "Siguiente";
   nav.hidden = false;
+}
+
+/* barra: pasos. Segunda línea: preguntas dentro del paso, cuando hay más de una */
+function actualizarContador(q){
+  const T = visibles().length;
+  $("#fill").style.width = (paso/T*100)+"%";
+  $("#count").innerHTML = `Paso ${paso} de ${T}`
+    + (q.subProgreso ? `<span class="mprog">${esc(q.subProgreso())}</span>` : "");
 }
 
 function renderIntro(){
@@ -554,6 +598,7 @@ function renderPregunta(q){
   if(q.tipo==="radio")  h += bloqueOps(q,"radio");
   if(q.tipo==="multi")  h += q.grupos ? bloqueHerramientas(q) : bloqueOps(q,"check");
   if(q.tipo==="matriz") h += bloqueMatriz(q);
+  if(q.tipo==="detalle") h += bloqueDetalle(q);
 
   if(q.ejemplo) h += `
     <div class="ejemplo" id="ej">
@@ -618,35 +663,62 @@ function bloqueHerramientas(q){
     <label class="opt${nin?" sel":""}" id="ninguna">
       <span class="mark check"></span><span class="opt-txt">${esc(q.ninguna)}</span></label>
   </div>`;
-  h += `<div id="subq" style="display:${sel.length&&!nin?"block":"none"};margin-top:26px">
-    <div class="grupo">${esc(q.subLabel)}</div>
-    <div class="opts" id="sub-ops"></div></div></div>`;
+  h += `</div>`;
   return h;
+}
+
+/* una pieza del acordeón: estado (pendiente o completa), texto, respuesta elegida */
+function itemHtml(n, titulo, resp, done, open, cuerpo){
+  return `<div class="item${done?" done":""}${open?" open":""}" data-item="${n}">
+    <button type="button" class="item-head" aria-expanded="${open}">
+      <span class="estado" title="${done?"Completa":"Pendiente"}"></span>
+      <span class="item-txt">${esc(titulo)}<span class="item-resp">${esc(resp)}</span></span>
+      <span class="chev"></span>
+    </button>
+    <div class="item-body">${cuerpo}</div>
+  </div>`;
 }
 
 function bloqueMatriz(q){
   const vals = R.p8 || {};
-  let h = `<div class="matriz-head">${esc(q.head)}</div>`;
+  if(UI.p8===undefined) UI.p8 = 1;            // arranca con la primera abierta
+  let h = `<div class="matriz-head">${esc(q.head)}</div><div id="acc">`;
   let n = 0;
   q.grupos.forEach(gr=>{
     h += `<div class="grupo">${esc(gr.g)}</div>`;
     gr.filas.forEach(f=>{
       n++;
       const v = vals[n];
-      h += `<div class="fila${v!==undefined?" done":""}" data-fila="${n}">
-        <div class="fila-txt"><span class="fila-num">${n}</span><span>${esc(f)}</span></div>
-        <div class="escala">`;
-      q.escala.forEach(e=>{
-        h += `<button type="button" class="esc${v===e.v?" sel":""}" data-fila="${n}" data-v="${e.v}">${esc(e.t)}</button>`;
-      });
-      h += `</div></div>`;
+      const resp = v!==undefined ? q.escala.find(e=>e.v===v).t : "";
+      h += itemHtml(n, f, resp, v!==undefined, UI.p8===n,
+        `<div class="escala">${q.escala.map(e=>
+          `<button type="button" class="esc${v===e.v?" sel":""}" data-fila="${n}" data-v="${e.v}">${esc(e.t)}</button>`
+        ).join("")}</div>`);
     });
   });
-  h += `<div class="grupo">${esc(q.abierta.label)}</div>
+  h += `</div><div class="grupo">${esc(q.abierta.label)}</div>
     <div class="field"><input type="text" id="p8-abierta" placeholder="${esc(q.abierta.ph)}"
-      value="${esc(R.p8_abierta||"")}"></div>
-`;
+      value="${esc(R.p8_abierta||"")}"></div>`;
   return h;
+}
+
+function bloqueDetalle(q){
+  const lista = herramientasConDetalle();
+  R.det = R.det || {};
+  if(UI.p14===undefined || UI.p14>lista.length) UI.p14 = 1;
+  let h = `<div id="acc">`;
+  lista.forEach((name,k)=>{
+    const n = k+1, d = R.det[name] || {sup:[]};
+    const done = detalleCompleto(name);
+    h += itemHtml(n, nombreHerr(name), done?resumenDetalle(name):"", done, UI.p14===n,
+      `<div class="sub-lbl">¿Por dónde la usás?</div>
+       <div class="chips" data-q="sup">${SUPERFICIES[name].map((s,i)=>
+         `<button type="button" class="chip${d.sup.includes(s)?" sel":""}" data-i="${i}">${esc(s)}</button>`).join("")}</div>
+       <div class="sub-lbl">¿Con qué cuenta?</div>
+       <div class="chips" data-q="cuenta">${CUENTAS.map((c,i)=>
+         `<button type="button" class="chip${d.cuenta===i?" sel":""}" data-i="${i}">${esc(c.t)}</button>`).join("")}</div>`);
+  });
+  return h + `</div>`;
 }
 
 /* ---------- interacción ---------- */
@@ -704,22 +776,49 @@ function cablear(q){
     });
   }
 
-  if(q.tipo==="multi" && q.grupos) cablearHerramientas(q,limpiar);
+  if(q.tipo==="multi" && q.grupos) cablearHerramientas(q);
 
   if(q.tipo==="matriz"){
     R.p8 = R.p8||{};
-    shell.querySelectorAll(".esc").forEach(b=>{
+    const cont = $("#acc");
+    cablearAcordeon(cont,q.id);
+    cont.querySelectorAll(".esc").forEach(b=>{
       b.addEventListener("click",()=>{
-        const f = +b.dataset.fila;
-        R.p8[f] = +b.dataset.v;
-        b.closest(".escala").querySelectorAll(".esc").forEach(x=>x.classList.remove("sel"));
-        b.classList.add("sel");
-        b.closest(".fila").classList.add("done");
-        progMatriz(); toggleEjemplo(q); limpiar();
+        const it = b.closest(".item");
+        R.p8[+b.dataset.fila] = +b.dataset.v;
+        b.parentNode.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
+        it.querySelector(".item-resp").textContent = b.textContent;
+        completarItem(cont,q.id,it);
+        toggleEjemplo(q); actualizarContador(q);
       });
     });
     $("#p8-abierta").addEventListener("input",e=>R.p8_abierta=e.target.value.trim());
-    progMatriz();
+  }
+
+  if(q.tipo==="detalle"){
+    const cont = $("#acc"), lista = herramientasConDetalle();
+    cablearAcordeon(cont,q.id);
+    cont.querySelectorAll(".chip").forEach(b=>{
+      b.addEventListener("click",()=>{
+        const it = b.closest(".item"), name = lista[+it.dataset.item-1];
+        const d = R.det[name] = R.det[name] || {sup:[]};
+        const cual = b.parentNode.dataset.q, i = +b.dataset.i;
+        if(cual==="sup"){
+          const s = SUPERFICIES[name][i], k = d.sup.indexOf(s);
+          if(k>=0) d.sup.splice(k,1); else d.sup.push(s);
+          b.classList.toggle("sel",k<0);
+        } else {
+          d.cuenta = i;
+          b.parentNode.querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x===b));
+        }
+        const done = detalleCompleto(name);
+        it.querySelector(".item-resp").textContent = done ? resumenDetalle(name) : "";
+        // se cierra al elegir la cuenta; mientras marca accesos queda abierta
+        if(done && cual==="cuenta") completarItem(cont,q.id,it);
+        else marcarEstado(it,done);
+        actualizarContador(q);
+      });
+    });
   }
 
   shell.querySelectorAll('[id^="otro-"]').forEach(el=>{
@@ -729,24 +828,7 @@ function cablear(q){
   toggleEjemplo(q);
 }
 
-function cablearHerramientas(q,limpiar){
-  const pintarSub = ()=>{
-    const sel = (R[q.id]||[]).filter(x=>x!=="__otra");
-    const otra = (R[q.id]||[]).includes("__otra") && R[q.id+"_otra"];
-    const lista = otra ? sel.concat([R[q.id+"_otra"]]) : sel;
-    const box = $("#subq"), ops = $("#sub-ops");
-    if(!lista.length || R[q.id+"_ninguna"]){ box.style.display="none"; return; }
-    box.style.display = "block";
-    ops.innerHTML = lista.map(n=>
-      `<label class="opt sub${R.p13_mas===n?" sel":""}" data-n="${esc(n)}">
-        <span class="mark radio"></span><span class="opt-txt">${esc(n)}</span></label>`).join("");
-    ops.querySelectorAll(".opt").forEach(l=>l.addEventListener("click",()=>{
-      R.p13_mas = l.dataset.n;
-      ops.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));
-      l.classList.add("sel"); limpiar();
-    }));
-  };
-
+function cablearHerramientas(q){
   shell.querySelectorAll(".opt.tool").forEach(l=>{
     l.addEventListener("click",()=>{
       const name = l.dataset.name;
@@ -759,23 +841,58 @@ function cablearHerramientas(q,limpiar){
         w.classList.toggle("on",arr.includes("__otra"));
         if(arr.includes("__otra")) $("#otro-tool").focus(); else R[q.id+"_otra"]="";
       }
-      if(R.p13_mas && !arr.includes(R.p13_mas) && R.p13_mas!==R[q.id+"_otra"]) R.p13_mas=null;
-      pintarSub(); limpiar();
+      actualizarContador(q);   // el total de pasos cambia si aparece o se va el detalle
     });
   });
-  $("#otro-tool").addEventListener("input",e=>{R[q.id+"_otra"]=e.target.value.trim();pintarSub()});
+  $("#otro-tool").addEventListener("input",e=>{R[q.id+"_otra"]=e.target.value.trim()});
   $("#ninguna").addEventListener("click",()=>{
     const on = !R[q.id+"_ninguna"];
     R[q.id+"_ninguna"] = on;
     $("#ninguna").classList.toggle("sel",on);
     if(on){
-      R[q.id]=[]; R.p13_mas=null; R[q.id+"_otra"]="";
+      R[q.id]=[]; R[q.id+"_otra"]="";
       shell.querySelectorAll(".opt.tool").forEach(o=>o.classList.remove("sel"));
       $("#ow-tool").classList.remove("on");
     }
-    pintarSub(); limpiar();
+    actualizarContador(q);
   });
-  pintarSub();
+}
+
+/* ---------- acordeón ----------
+   Una pieza abierta a la vez. Al completarse, se cierra, queda con el ícono de
+   completa y se abre la siguiente pendiente. Cualquier pieza se puede reabrir;
+   la que se deja sin responder conserva el ícono de pendiente. */
+
+function abrir(cont,key,n){
+  UI[key] = n;
+  cont.querySelectorAll(".item").forEach(it=>{
+    const on = +it.dataset.item===n;
+    it.classList.toggle("open",on);
+    it.querySelector(".item-head").setAttribute("aria-expanded",on);
+    if(on) requestAnimationFrame(()=>{
+      const r = it.getBoundingClientRect();
+      if(r.top<100 || r.top>innerHeight*0.55) it.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+}
+function siguientePendiente(cont,desde){
+  const pend = [...cont.querySelectorAll(".item:not(.done)")].map(it=>+it.dataset.item);
+  return pend.find(x=>x>desde) || pend[0] || null;
+}
+function cablearAcordeon(cont,key){
+  cont.querySelectorAll(".item-head").forEach(b=>b.addEventListener("click",()=>{
+    const n = +b.closest(".item").dataset.item;
+    abrir(cont,key, UI[key]===n ? null : n);
+  }));
+}
+function marcarEstado(it,done){
+  it.classList.toggle("done",done);
+  it.querySelector(".estado").title = done ? "Completa" : "Pendiente";
+  if(done && it.classList.contains("invalid")){ it.classList.remove("invalid"); avisoAcordeon() }
+}
+function completarItem(cont,key,it){
+  marcarEstado(it,true);
+  abrir(cont,key,siguientePendiente(cont,+it.dataset.item));
 }
 
 function toggleEjemplo(q){
@@ -796,13 +913,6 @@ function toggleEjemplo(q){
   box.classList.toggle("on",mostrar);
 }
 
-function progMatriz(){
-  const n = Object.keys(R.p8||{}).length;
-  const el = $("#count"); if(!el) return;
-  el.innerHTML = `Pregunta ${paso} de ${TOTAL}`
-    + `<span class="mprog">${n===15?"las 15 respondidas":`${n} de 15 respondidas`}</span>`;
-}
-
 /* ---------- validación ----------
    Cada error se marca en su campo, con el mensaje debajo, y la pantalla va
    hasta el primero. La marca se despeja cuando la persona toca ese campo.
@@ -820,19 +930,21 @@ function limpiarErrores(){
 function despejar(t){
   const inv = t.closest && t.closest(".invalid");
   if(!inv) return;
+  if(inv.classList.contains("item")) return;   // la pieza se despeja al completarse
   inv.classList.remove("invalid");
   const s = inv.nextElementSibling;
   if(s && s.classList.contains("err")) s.remove();
-  if(inv.classList.contains("fila")) avisoMatriz();
 }
 
-/* el aviso de la matriz cuenta en vivo las filas que siguen marcadas */
-function avisoMatriz(){
-  const a = $("#aviso"), n = shell.querySelectorAll(".fila.invalid").length;
+/* el aviso del acordeón cuenta en vivo las piezas que siguen marcadas */
+function avisoAcordeon(){
+  const a = $("#aviso"), n = shell.querySelectorAll(".item.invalid").length;
   if(!n){ a.classList.remove("on"); return }
+  const q = visibles()[paso-1];
+  const [uno,varios] = q.tipo==="detalle" ? ["herramienta","herramientas"] : ["pregunta","preguntas"];
   a.textContent = n===1
-    ? "Queda una fila sin responder: está marcada en rojo."
-    : `Quedan ${n} filas sin responder: están marcadas en rojo.`;
+    ? `Queda una ${uno} por completar: está marcada en rojo.`
+    : `Quedan ${n} ${varios} por completar: están marcadas en rojo.`;
   a.classList.add("on");
 }
 
@@ -887,22 +999,22 @@ function validar(q){
       marcar($("#tools-fin"),"Marcá al menos una herramienta, o «Todavía ninguna».");
     if(arr.includes("__otra") && !R[q.id+"_otra"])
       marcar($("#otro-tool"),"Escribí qué otra herramienta usás.");
-    if(marcadas>1 && !R.p13_mas) marcar($("#sub-ops"),"Elegí cuál usás más.");
-    if(marcadas===1 && !R.p13_mas){
-      const u = arr.filter(x=>x!=="__otra"); R.p13_mas = u.length?u[0]:(R[q.id+"_otra"]||"");
-    }
   }
 
-  if(q.tipo==="matriz"){
-    const faltan = [];
-    for(let f=1;f<=15;f++) if((R.p8||{})[f]===undefined) faltan.push(f);
-    faltan.forEach(f=>marcar(shell.querySelector(`.fila[data-fila="${f}"]`)));
-    if(faltan.length){
-      const a = $("#aviso");
-      a.textContent = faltan.length===1
-        ? "Queda una fila sin responder: está marcada en rojo."
-        : `Quedan ${faltan.length} filas sin responder: están marcadas en rojo.`;
-      a.classList.add("on");
+  // acordeón: se marcan las piezas pendientes y se abre la primera
+  if(q.tipo==="matriz" || q.tipo==="detalle"){
+    const cont = $("#acc");
+    const pend = [...cont.querySelectorAll(".item:not(.done)")];
+    pend.forEach(it=>marcar(it));
+    if(pend.length){
+      const primero = pend[0];
+      abrir(cont,q.id,+primero.dataset.item);
+      if(q.tipo==="detalle"){
+        const d = (R.det||{})[herramientasConDetalle()[+primero.dataset.item-1]] || {sup:[]};
+        if(!d.sup.length) marcar(primero.querySelector('.chips[data-q="sup"]'),"Marcá por dónde la usás.");
+        if(d.cuenta===undefined) marcar(primero.querySelector('.chips[data-q="cuenta"]'),"Elegí con qué cuenta la usás.");
+      }
+      avisoAcordeon();
     }
   }
 
@@ -979,8 +1091,9 @@ function calcular(){
 
   /* --- banderas --- */
   const opP11 = opRadio("p11");
-  const qp14 = Q.find(x=>x.id==="p14"), qp15 = Q.find(x=>x.id==="p15");
-  const cuentaPersonal = (R.p14||[]).some(i=>qp14.ops[i].personal);
+  const qp15 = Q.find(x=>x.id==="p15");
+  const cuentaPersonal = herramientasConDetalle()
+    .some(n=>detalleCompleto(n) && CUENTAS[R.det[n].cuenta].personal);
   const datoSensible  = (R.p15||[]).some(i=>qp15.ops[i].sensible);
 
   const banderas = [];
@@ -1087,11 +1200,13 @@ function payload(){
     p9_continuidad:nombreOp("p9",R.p9), p9_otra:R.p9_otra||"", p9_ejemplo:R.p9_ejemplo||"",
     p10_orden:nombreOp("p10",R.p10), p10_otra:R.p10_otra||"", p10_ejemplo:R.p10_ejemplo||"",
     p11_autonomia:nombreOp("p11",R.p11), p11_otra:R.p11_otra||"",
-    p12_superficies:listaOps("p12"), p12_otra:R.p12_otra||"",
+    /* por herramienta, en las columnas que ya existen en la hoja:
+       «ChatGPT: Navegador, App del celular | Claude: App de escritorio» */
+    p12_superficies:detalleTexto("sup"), p12_otra:"",
 
     p13_herramientas:(R.p13||[]).filter(x=>x!=="__otra").join(" | "),
-    p13_otra:R.p13_otra||"", p13_ninguna:!!R.p13_ninguna, p13_mas_usada:R.p13_mas||"",
-    p14_acceso:listaOps("p14"), p14_otra:R.p14_otra||"",
+    p13_otra:R.p13_otra||"", p13_ninguna:!!R.p13_ninguna, p13_mas_usada:"",
+    p14_acceso:detalleTexto("cuenta"), p14_otra:"",
     p15_datos:listaOps("p15"), p15_otra:R.p15_otra||"",
     p16_recomendacion:R.p16||"", p17_tarea_deseada:R.p17||"",
 
@@ -1105,6 +1220,14 @@ function payload(){
     dimension_mas_floja:r.dimFloja,
     paso_origen:r.pasoOrigen, paso_clave:r.pasoClave
   };
+}
+
+function detalleTexto(parte){
+  return herramientasConDetalle().filter(detalleCompleto).map(n=>{
+    const d = R.det[n];
+    const v = parte==="sup" ? SUPERFICIES[n].filter(s=>d.sup.includes(s)).join(", ") : CUENTAS[d.cuenta].t;
+    return `${nombreHerr(n)}: ${v}`;
+  }).join(" | ");
 }
 
 async function enviar(){
@@ -1136,8 +1259,9 @@ async function enviar(){
 /* ---------- navegación ---------- */
 
 btnNext.addEventListener("click",()=>{
-  if(paso>0 && paso<=TOTAL && !validar(Q[paso-1])) return;
-  if(paso===TOTAL){ resultado = calcular(); paso++; return render() }
+  const V = visibles();
+  if(paso>0 && paso<=V.length && !validar(V[paso-1])) return;
+  if(paso===V.length){ resultado = calcular(); paso++; return render() }
   paso++; render();
 });
 btnBack.addEventListener("click",()=>{ if(paso>0){paso--; render()} });
