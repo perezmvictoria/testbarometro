@@ -188,25 +188,33 @@ input.invalid,textarea.invalid{border-color:#B3261E;background:#FFF8F7}
 .opts + .err{margin:-2px 0 12px}
 
 /* ---------- resultado ---------- */
-.result-hero{border-radius:var(--radius);padding:34px 28px;margin-bottom:22px;box-shadow:var(--shadow-md);text-align:center}
-.result-hero .kicker{font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:10px}
-.result-hero .peldano{font-size:2.3rem;font-weight:800;line-height:1.1;letter-spacing:-.025em;margin-bottom:0}
-.result-hero .num{font-family:'Dancing Script',cursive;font-size:3.4rem;line-height:1;display:block;margin-bottom:4px;opacity:.9}
 .card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:24px 24px;margin-bottom:18px}
 .card h3{font-size:1.05rem;font-weight:800;margin-bottom:10px;color:var(--violet-deep)}
 .paso{background:var(--amber-pale);border-left:4px solid var(--amber);border-radius:0 var(--radius) var(--radius) 0;padding:20px 22px;margin-bottom:18px}
 .paso h3{font-size:.8rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-sec);margin-bottom:8px}
 .paso p{font-size:1.05rem;line-height:1.55;margin:0}
-.mapa{display:flex;gap:5px;margin:16px 0 10px}
-.mapa-seg{flex:1;text-align:center}
-.mapa-bar{height:9px;border-radius:99px;margin-bottom:7px}
-.mapa-lbl{font-size:.68rem;font-weight:600;color:var(--ink-muted);line-height:1.2}
-.mapa-seg.here .mapa-lbl{color:var(--violet-deep);font-weight:800}
-.mapa-seg.here .mapa-bar{box-shadow:0 0 0 3px var(--violet-pale)}
+/* el recorrido: los cinco peldaños explicados */
+.escalera{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.escalera li{display:flex;gap:12px;align-items:flex-start}
+.lad-sw{flex:0 0 16px;height:16px;border-radius:5px;margin-top:3px}
+.lad-txt{font-size:.95rem;line-height:1.4;color:var(--ink)}
+.lad-desc{display:block;color:var(--ink-sec);font-size:.87rem;margin-top:1px}
+/* dónde estás: tramos proporcionales al rango de cada peldaño, con marca */
+.posicion{position:relative;margin:26px 0 6px}
+.tramos{display:flex;gap:3px;height:14px}
+.tramo{border-radius:4px;opacity:.35}
+.tramo.here{opacity:1}
+.tramo.next{opacity:.65}
+.pin{position:absolute;top:-9px;width:4px;height:32px;background:var(--ink);border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px var(--white)}
+.tramo-nums{display:flex;gap:3px;margin-top:7px}
+.tramo-nums span{font-size:.75rem;font-weight:700;color:var(--ink-muted);text-align:center}
+.tramo-nums span.here{color:var(--violet-deep)}
+.donde{font-size:1.02rem;margin:14px 0 0}
+.opc{font-weight:600;font-size:.75rem;color:var(--ink-muted);margin-left:6px}
+.field.abierta{margin-top:26px}
+.field.abierta .hint{margin-bottom:10px}
 .envio{font-size:.85rem;color:var(--ink-sec);text-align:center;padding:12px}
 .envio.err{color:#B3261E;font-weight:600}
-.firma{text-align:center;color:var(--ink-muted);font-size:.85rem;margin-top:26px}
-.firma .script{font-size:1.3rem;color:var(--violet-mid)}
 
 @media(max-width:560px){ .bar-long{display:none} }
 @media(max-width:480px){
@@ -216,9 +224,6 @@ input.invalid,textarea.invalid{border-color:#B3261E;background:#FFF8F7}
   .bar-inner{padding:0 16px}
   .intro-card{padding:22px 19px}
   .item-body{padding:0 14px 14px}
-  .result-hero .peldano{font-size:1.9rem}
-  .mapa{gap:3px}
-  .mapa-lbl{font-size:.6rem}
 }
 </style>
 </head>
@@ -387,8 +392,9 @@ const Q = [
     ]}
   ],
   /* fila 16 del documento: abierta, sin puntaje */
-  abierta:{label:"Otra práctica que uses y falte en esta lista",
-    ph:"Contanos cuál (opcional)"},
+  abierta:{label:"¿Hacés algo más con IA que quieras contarnos?",
+    hint:"Un truco, una forma de trabajar o algo que armaste. Nos ayuda a descubrir lo que ya se hace en Divino.",
+    ph:"Contalo en una línea"},
   /* el ejemplo se pide una sola vez, si marcó «lo uso habitualmente» en
      skills (10), conectores (11) o agentes (12) */
   ejemploFilas:[10,11,12],
@@ -396,14 +402,14 @@ const Q = [
     why:"Marcaste que usás habitualmente skills, conectores o agentes.", ph:"Para qué lo usás"}},
 
 /* 8 · P9 dónde queda */
-{id:"p9", tipo:"radio", eyebrow:"Dónde vive tu trabajo", dim:"continuidad",
-  t:"Lo que trabajás con IA, ¿dónde queda?",
+{id:"p9", tipo:"radio", eyebrow:"Dónde lo guardás", dim:"continuidad",
+  t:"Cuando la IA te ayuda con algo, ¿dónde guardás el resultado?",
   ops:[
-    {t:"En la conversación, y vuelvo a buscarlo ahí cuando lo necesito",v:0},
-    {t:"Lo copio a un documento suelto",v:1},
-    {t:"Va a una carpeta de archivos organizada con criterio propio",v:2},
-    {t:"Va a Notion, Drive u otra herramienta donde ya trabajo",v:2},
-    {t:"Va al sistema donde trabaja mi equipo, y otras personas lo usan",v:3},
+    {t:"Queda en el chat y lo busco ahí",v:0},
+    {t:"Lo copio a un documento",v:1},
+    {t:"Lo guardo en carpetas ordenadas a mi manera",v:2},
+    {t:"Lo guardo en Drive, Notion u otra herramienta donde ya trabajo",v:2},
+    {t:"Lo subo a donde trabaja mi equipo, y otras personas lo usan",v:3},
     OTRA
   ],
   ejemplo:{cuando:v=>v>=3, label:"Nombrá el sistema y quiénes lo usan.",
@@ -411,25 +417,26 @@ const Q = [
 
 /* 9 · P10 nomenclatura */
 {id:"p10", tipo:"radio", eyebrow:"Tu orden", dim:"orden",
-  t:"¿Tenés convenciones propias para nombrar y describir lo que guardás?",
+  t:"¿Cómo les ponés nombre a esos archivos?",
   ops:[
-    {t:"Todavía no lo pensé",v:0},
-    {t:"Nombro los archivos con criterio, sin regla escrita",v:1},
-    {t:"Tengo una nomenclatura definida que sigo",v:2},
-    {t:"Tengo nomenclatura y descripciones de qué contiene cada documento",v:2,alta:true},
+    {t:"Como salga en el momento",v:0},
+    {t:"Con un criterio propio, según el caso",v:1},
+    {t:"Siempre con la misma regla, por ejemplo fecha_tema_versión",v:2},
+    {t:"Con una regla fija, y además anoto qué tiene cada archivo",v:2,alta:true},
     OTRA
   ],
   ejemplo:{cuando:(v,op)=>!!(op&&op.alta), label:"Escribí un ejemplo de cómo nombrás un archivo.",
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Un nombre de archivo tuyo"}},
 
 /* 10 · P11 autonomía — bandera, sin puntaje */
-{id:"p11", tipo:"radio", eyebrow:"Si se corta el acceso",
-  t:"Si perdieras el acceso a la IA durante una semana, ¿qué pasa con tu trabajo?",
+{id:"p11", tipo:"radio", eyebrow:"Una semana sin IA",
+  t:"Imaginá una semana entera sin poder usar IA. ¿Cómo sigue tu trabajo?",
+  hint:"Nos muestra cuánto de tu trabajo ya se apoya en la IA.",
   ops:[
-    {t:"Sigo igual, la uso poco",v:0},
-    {t:"Tardo más, y llego",v:1},
-    {t:"Se complican tareas puntuales que ya venía delegando",v:2,alta:true},
-    {t:"Varias cosas que hoy salen quedarían sin salir",v:3,alta:true},
+    {t:"Igual: la uso poco",v:0},
+    {t:"Sigue, con más tiempo",v:1},
+    {t:"Se complican algunas tareas que ya le delegaba",v:2,alta:true},
+    {t:"Varias cosas que hoy salen quedan frenadas",v:3,alta:true},
     OTRA
   ]},
 
@@ -456,49 +463,54 @@ const Q = [
 /* 13 · P15 datos — gobernanza, sin puntaje
    [PENDIENTE DE INÉS] formulación exacta de las dos filas de sistemas internos
    y las URLs de QlikView / Qlik Sense */
-{id:"p15", tipo:"multi", eyebrow:"Con qué trabajás",
-  t:"¿Con qué tipo de información trabajás cuando usás IA?",
-  hint:"Marcá todas las que apliquen.",
+{id:"p15", tipo:"multi", eyebrow:"Qué le compartís",
+  t:"¿Qué le compartís a la IA cuando le pedís ayuda?",
+  hint:"Pegar un texto, subir un archivo o copiar una tabla cuentan. Marcá todo lo que hayas usado.",
   ops:[
-    {t:"Información pública o general",v:0},
-    {t:"Textos y documentos que escribo yo",v:0},
+    {t:"Textos que escribo yo: mails, informes, presentaciones",v:0},
+    {t:"Información pública: webs, noticias, normativa",v:0},
     {t:"Planillas o reportes de QlikView o Qlik Sense",v:0},
-    {t:"Información del ERP o del sistema de punta de venta",v:0},
-    {t:"Datos de clientes o proveedores",v:0,sensible:true},
-    {t:"Información de personas: legajos, evaluaciones, sueldos",v:0,sensible:true},
-    {t:"Información financiera o comercial reservada",v:0,sensible:true},
+    {t:"Datos del ERP o del sistema de punta de venta",v:0},
+    {t:"Planillas con datos de clientes o proveedores",v:0,sensible:true},
+    {t:"Planillas del equipo: horarios, licencias, sueldos",v:0,sensible:true},
+    {t:"Precios, costos, ventas o márgenes",v:0,sensible:true},
     OTRA
   ]},
 
 /* 14 · P16 recomendación — abierta, opcional */
-{id:"p16", tipo:"largo", eyebrow:"Tu aporte",
-  t:"¿Hay alguna herramienta de IA que uses y que te parezca que le serviría al resto de Divino?",
-  hint:"Contanos cuál y para qué. Es opcional.",
-  ph:"Cuál y para qué la usarías"},
+{id:"p16", tipo:"largo", eyebrow:"Tu aporte · opcional",
+  t:"¿Qué herramienta de IA le recomendarías a Divino?",
+  hint:"Divino está evaluando qué herramientas sumar. Contanos cuál te funciona y para qué: tu recomendación entra en esa evaluación.",
+  ph:"Cuál y para qué la usás"},
 
 /* 15 · P17 tarea deseada — abierta, opcional */
-{id:"p17", tipo:"largo", eyebrow:"Tu aporte",
-  t:"¿Hay alguna tarea de tu trabajo donde te gustaría usar IA y todavía no sabés cómo?",
-  hint:"Es opcional, y es de lo más útil para diseñar el programa.",
-  ph:"Qué tarea"}
+{id:"p17", tipo:"largo", eyebrow:"Tu aporte · opcional",
+  t:"¿Qué tarea de tu trabajo te gustaría resolver con IA?",
+  hint:"Con estas tareas elegimos los ejemplos de la master class y los talleres. La tuya puede ser una de ellas.",
+  ph:"Qué tarea y qué te gustaría lograr"}
 ];
 
 /* ---------- los cinco peldaños ---------- */
 
 const PELDANOS = [
   {n:1, nombre:"Punto de partida", min:0,  max:6,  color:"var(--step-1)", texto:"var(--violet-deep)",
+   describe:"Uso ocasional, o todavía sin usarla para el trabajo.",
    cuerpo:"Estás arrancando, y ese es el mejor momento para hacerlo con criterio.",
    paso:"Elegí una tarea concreta de tu semana y hacela con IA acompañada la primera vez. Una sola, con resultado usable."},
   {n:2, nombre:"Explorando", min:7,  max:14, color:"var(--step-2)", texto:"var(--violet-deep)",
+   describe:"Preguntas sueltas, como un buscador. Cada conversación arranca de cero.",
    cuerpo:"Ya la usás para cosas de tu trabajo. Cada conversación arranca de cero, y ahí está tu oportunidad más grande.",
    paso:"Dar contexto antes de pedir — quién sos, para qué es, cómo tiene que quedar. Es el cambio que más mueve la calidad de lo que recibís."},
   {n:3, nombre:"Incorporando", min:15, max:22, color:"var(--step-3)", texto:"var(--white)",
+   describe:"Varias veces por semana en tareas reales, repitiendo el contexto cada vez.",
    cuerpo:"La IA ya toca tareas reales de tu trabajo. Estás repitiendo el contexto cada vez, y eso tiene solución.",
    paso:"Armar tu primer proyecto con instrucciones guardadas y los documentos que usás siempre. Dejás de explicar quién sos en cada conversación."},
   {n:4, nombre:"Integrando", min:23, max:31, color:"var(--step-4)", texto:"var(--white)",
+   describe:"Proyectos armados: la IA ya toca tareas centrales del rol.",
    cuerpo:"Tenés la herramienta configurada y trabajando en el centro de tu rol.",
    paso:"Criterio. Decidir con intención qué le delegás, qué te reservás, y cómo verificás lo que te devuelve antes de usarlo."},
   {n:5, nombre:"Referente", min:32, max:40, color:"var(--step-5)", texto:"var(--white)",
+   describe:"Tareas rediseñadas, y cosas armadas que otras personas usan.",
    cuerpo:"Rediseñaste cómo trabajás y producís cosas que antes quedaban fuera de tu alcance.",
    paso:"Que lo que armaste llegue a tu equipo. Tu configuración sirve a más gente que vos."}
 ];
@@ -576,8 +588,9 @@ function renderIntro(){
   nav.hidden = false;
   shell.innerHTML = `
   <div class="intro-card" style="margin-top:34px">
-    <h1>Descubrí qué más puede hacer la IA en tu trabajo</h1>
-    <p>Divino arranca un programa de IA con master class y talleres. Tus respuestas definen qué vamos a trabajar en cada encuentro.</p>
+    <h1>¿Cuánta IA usás sin darte cuenta?</h1>
+    <p>El Copilot de tu correo, Rovo en Jira y la IA de Adobe o de Qlik también cuentan. En pocos minutos armás el mapa de tu uso y te llevás tu siguiente paso.</p>
+    <p>Con tus respuestas, Divino arma la master class y los talleres.</p>
     <div class="privacy">
       <p><strong>Qué recibe Divino.</strong> Tu nombre, correo, área, cargo y tu punto de partida, para armar los grupos. El resto de tus respuestas llega en números del conjunto.</p>
     </div>
@@ -696,9 +709,12 @@ function bloqueMatriz(q){
         ).join("")}</div>`);
     });
   });
-  h += `</div><div class="grupo">${esc(q.abierta.label)}</div>
-    <div class="field"><input type="text" id="p8-abierta" placeholder="${esc(q.abierta.ph)}"
-      value="${esc(R.p8_abierta||"")}"></div>`;
+  h += `</div>
+    <div class="field abierta">
+      <label class="fl" for="p8-abierta">${esc(q.abierta.label)} <span class="opc">Opcional</span></label>
+      <p class="hint">${esc(q.abierta.hint)}</p>
+      <input type="text" id="p8-abierta" placeholder="${esc(q.abierta.ph)}" value="${esc(R.p8_abierta||"")}">
+    </div>`;
   return h;
 }
 
@@ -1132,43 +1148,52 @@ function calcular(){
 
 /* ---------- resultado ---------- */
 
+/* Orden: primero se explica el recorrido, después se muestra dónde está la
+   persona dentro de él, y al final el paso para llegar al peldaño siguiente.
+   El puntaje se muestra como posición, sin número. */
 function renderResultado(){
   const r = resultado;
   const p = r.peldano;
+  const sig = PELDANOS.find(x=>x.n===p.n+1);
   nav.hidden = true;
 
-  const mapa = PELDANOS.map(x=>`
-    <div class="mapa-seg${x.n===p.n?" here":""}">
-      <div class="mapa-bar" style="background:${x.color}"></div>
-      <div class="mapa-lbl">${esc(x.nombre)}</div>
-    </div>`).join("");
+  const escalera = PELDANOS.map(x=>`
+    <li><span class="lad-sw" style="background:${x.color}"></span>
+      <span class="lad-txt"><strong>${x.n} · ${esc(x.nombre)}</strong>
+        <span class="lad-desc">${esc(x.describe)}</span></span></li>`).join("");
+
+  const tramos = PELDANOS.map(x=>
+    `<div class="tramo${x.n===p.n?" here":""}${sig&&x.n===sig.n?" next":""}" style="flex:${x.max-x.min+1};background:${x.color}"></div>`).join("");
+  const nums = PELDANOS.map(x=>
+    `<span class="${x.n===p.n?"here":""}" style="flex:${x.max-x.min+1}">${x.n}</span>`).join("");
+  const pos = Math.min(98, Math.max(2, r.total/40*100));
 
   shell.innerHTML = `
   <div style="padding-top:30px">
-    <div class="result-hero" style="background:${p.color};color:${p.texto}">
-      <div class="kicker">Tu punto en el recorrido</div>
-      <span class="num">${p.n}</span>
-      <div class="peldano">${esc(p.nombre)}</div>
+    <div class="eyebrow">Tu resultado</div>
+    <h1>El recorrido de la IA en el trabajo</h1>
+
+    <div class="card">
+      <p style="margin:0;color:var(--ink-sec)">Tiene cinco peldaños. Cada persona arranca desde donde está, y cada peldaño tiene su siguiente paso.</p>
+      <ol class="escalera">${escalera}</ol>
     </div>
 
     <div class="card">
-      <p style="font-size:1.05rem;margin:0">${esc(p.cuerpo)}</p>
+      <h3>Dónde estás hoy</h3>
+      <div class="posicion">
+        <div class="tramos">${tramos}</div>
+        <div class="pin" style="left:${pos}%"></div>
+        <div class="tramo-nums">${nums}</div>
+      </div>
+      <p class="donde"><strong>${p.n} · ${esc(p.nombre)}.</strong> ${esc(p.cuerpo)}</p>
     </div>
 
     <div class="paso">
-      <h3>Tu siguiente paso</h3>
+      <h3>${sig ? `Tu siguiente paso hacia ${esc(sig.nombre)}` : "Tu siguiente paso"}</h3>
       <p>${esc(r.paso)}</p>
     </div>
 
-    <div class="card">
-      <h3>El recorrido completo</h3>
-      <div class="mapa">${mapa}</div>
-      <p style="font-size:.88rem;color:var(--ink-sec);margin:8px 0 0">
-        Cada persona arranca desde donde está, y ese punto de partida es el comienzo del recorrido.</p>
-    </div>
-
     <div class="envio" id="envio">Guardando tu respuesta…</div>
-    <p class="firma">Gracias por el tiempo.<br><span class="script">Conecto</span></p>
   </div>`;
 
   enviar();
