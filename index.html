@@ -634,7 +634,7 @@ const PELDANOS = [
    cuerpo:"Tenés la herramienta configurada y trabajando en el centro de tu rol.",
    paso:"Criterio. Decidir con intención qué le delegás, qué te reservás, y cómo verificás lo que te devuelve antes de usarlo."},
   {n:5, nombre:"Referente", min:32, max:40, color:"var(--step-5)", texto:"var(--white)",
-   describe:"Tareas rediseñadas, y cosas armadas que otras personas usan.",
+   describe:"Procesos rediseñados, y cosas armadas que otras personas usan.",
    cuerpo:"Rediseñaste cómo trabajás y producís cosas que antes quedaban fuera de tu alcance.",
    paso:"Que lo que armaste llegue a tu equipo. Tu configuración sirve a más gente que vos."}
 ];
@@ -1418,6 +1418,18 @@ function textoEjemplos(id){
   return ks.map(k=>e[k]).join(" | ");
 }
 
+/* el texto del siguiente paso con los textos vigentes: la primera bandera con texto, la dimensión
+   floja si está escrita, o el paso del peldaño. Un resultado guardado conserva su regla y toma el
+   texto actual, así un texto escrito después de responder también llega a «Ver mi resultado». */
+function textoPaso(r){
+  const conTexto = (r.banderas||[]).find(b=>PASO_BANDERA[b]);
+  if(conTexto) return PASO_BANDERA[conTexto];
+  const porDimension = r.porDimension ?? r.pasoOrigen==="dimension";   // resultados guardados antes de este campo
+  if(porDimension && PASO_DIMENSION[r.dimFloja]) return PASO_DIMENSION[r.dimFloja];
+  const p = PELDANOS.find(x=>x.n===r.peldano.n);
+  return p ? p.paso : (r.paso||"");
+}
+
 function calcular(){
   /* --- bloque base --- */
   const frecuencia = valorRadio("q2_frecuencia");
@@ -1473,7 +1485,8 @@ function calcular(){
   if(opP11 && opP11.alta && sumaConfigMatriz<=4) banderas.push("dependencia_sin_arquitectura");
   if(frecuencia>=3 && configuracion<=1)        banderas.push("intensidad_sin_metodo");
   if(R.q4_configuracion===0 || cerosMatriz>10)               banderas.push("desconocimiento");
-  if(sumaMatriz>=30 && continuidad<=1)         banderas.push("constructor_solitario");
+  // P9 en las dos primeras opciones (queda en el chat, lo copia a un documento); «Otra» queda afuera
+  if(sumaMatriz>=30 && [0,1].includes(R.q8_continuidad)) banderas.push("constructor_solitario");
   if(cuentaPersonal && datoSensible)           banderas.push("exposicion");   // sin paso personal: va al agregado de Inés
 
   /* --- siguiente paso ---
@@ -1491,20 +1504,19 @@ function calcular(){
   // la regla que corresponde, según el documento: va a la hoja aunque su texto todavía falte.
   // Exposición no tiene paso personal (no figura en PASO_BANDERA) y se saltea
   const conPaso = banderas.find(b=>b in PASO_BANDERA);
+  // con todas las dimensiones completas no hay dimensión floja: manda el paso del peldaño
+  const porDimension = peldano.n>=3 && peor < 1 - 1e-9;
   let origen = "peldano", clave = "peldano_"+peldano.n;
   if(conPaso){ origen="bandera"; clave=conPaso }
-  else if(peldano.n>=3){ origen="dimension"; clave=dimFloja }
+  else if(porDimension){ origen="dimension"; clave=dimFloja }
 
-  // el texto que ve la persona: la primera bandera con texto, la dimensión si está escrita, o el peldaño
-  const conTexto = banderas.find(b=>PASO_BANDERA[b]);
-  const paso = conTexto ? PASO_BANDERA[conTexto]
-             : peldano.n>=3 && PASO_DIMENSION[dimFloja] ? PASO_DIMENSION[dimFloja]
-             : peldano.paso;
+  // el texto que ve la persona sale de textoPaso(), que también se usa al volver a «Ver mi resultado»
+  const paso = textoPaso({banderas, porDimension, dimFloja, peldano});
 
   return {frecuencia,profundidad,configuracion,diagnostico,verificacion,base,
           matriz,sumaMatriz,filas,sumaConfigMatriz,cerosMatriz,
           continuidad,orden,avanzado,total,peldano,banderas,
-          dimFloja,pasoOrigen:origen,pasoClave:clave,paso};
+          dimFloja,porDimension,pasoOrigen:origen,pasoClave:clave,paso};
 }
 
 /* ---------- resultado ---------- */
@@ -1514,7 +1526,7 @@ function calcular(){
    El puntaje se muestra como posición, sin número. */
 function renderResultado(){
   const r = resultado;
-  const p = r.peldano;
+  const p = PELDANOS.find(x=>x.n===r.peldano.n) || r.peldano;   // textos vigentes del peldaño guardado
   const sig = PELDANOS.find(x=>x.n===p.n+1);
   nav.hidden = true;
 
@@ -1556,7 +1568,7 @@ function renderResultado(){
 
     <div class="paso">
       <h3>${sig ? `Tu siguiente paso hacia ${esc(sig.nombre)}` : "Tu siguiente paso"}</h3>
-      <p>${esc(r.paso)}</p>
+      <p>${esc(textoPaso(r))}</p>
     </div>
 
     <div class="envio" id="envio"></div>
