@@ -55,8 +55,8 @@ strong{font-weight:700}
 
 /* ---------- encabezado del sitio ---------- */
 .site{background:rgba(255,255,255,0.95);border-bottom:1px solid var(--border-default)}
-.site-inner{max-width:800px;margin:0 auto;padding:0 16px;height:56px;display:flex;align-items:center}
-.site .logo{height:30px;width:auto;display:block}
+.site-inner{max-width:800px;margin:0 auto;padding:0 8px;height:72px;display:flex;align-items:center}
+.site .logo{height:60px;width:auto;display:block}
 
 /* ---------- barra de progreso: la que queda fija ---------- */
 .bar{
@@ -225,11 +225,6 @@ button.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 .aviso{color:var(--error);font-size:14px;font-weight:600;margin-top:4px;display:none}
 .aviso.on{display:block}
 
-/* ---------- pie del sitio ---------- */
-.site-foot{background:#111}
-.site-foot-inner{max-width:800px;margin:0 auto;padding:28px 16px}
-.site-foot .logo{height:36px;width:auto;display:block;filter:brightness(0) invert(1);opacity:.75}
-
 /* ---------- errores de validación ---------- */
 input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-bg)}
 .opts.invalid .opt{border-color:var(--error-soft)}
@@ -273,8 +268,8 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
 
 @media(max-width:559px){ .bar-long{display:none} }
 @media(min-width:768px){
-  .site-inner{height:64px;padding:0 40px}
-  .site .logo{height:36px}
+  .site-inner{height:88px;padding:0 28px}
+  .site .logo{height:78px}
   .bar-inner{padding:16px 40px 18px;gap:12px}
   .bar-title{font-size:18px}
   .shell{padding:40px 40px 48px}
@@ -302,8 +297,6 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
   button.btn{min-height:52px;font-size:17px}
   .btn.ghost{padding:0 28px}
   .btn.primary{flex:0 0 auto;min-width:200px;padding:0 32px;margin-left:auto}
-  .site-foot-inner{padding:36px 40px}
-  .site-foot .logo{height:40px}
   .resultado{padding-top:8px}
   .resultado h1{font-size:40px;line-height:1.15;margin-bottom:24px}
   .resultado .card{padding:32px;gap:20px}
@@ -324,7 +317,7 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
 <body>
 
 <header class="site">
-  <div class="site-inner"><img class="logo" src="assets/logo-vp.png" alt="Victoria Perez" width="90" height="30"></div>
+  <div class="site-inner"><img class="logo" src="assets/logo-vp.png" alt="Victoria Perez" width="180" height="60"></div>
 </header>
 
 <div class="bar" id="bar" hidden>
@@ -343,10 +336,6 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
     <button class="btn primary" id="next">Empezar</button>
   </div>
 </nav>
-
-<footer class="site-foot">
-  <div class="site-foot-inner"><img class="logo" src="assets/logo-vp.png" alt="Victoria Perez" width="120" height="40"></div>
-</footer>
 
 <script>
 /* ==========================================================================
