@@ -6,8 +6,11 @@
 <title>Barómetro de adopción de IA — Divino</title>
 <meta name="description" content="Formulario de calibración del proceso de adopción de IA en Divino.">
 <meta name="robots" content="noindex">
-<!-- [PENDIENTE] confirmar el nombre exacto del favicon en /assets/ del repo del sitio
-<link rel="icon" href="/assets/favicon.ico"> -->
+<!-- logo y favicons: la ruta depende de dónde se publica este archivo
+     (testbarometro: assets/ · perezmvictoria.uy/divino/: ../assets/). El resto del archivo es igual en las dos copias. -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -358,7 +361,7 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
 
 /* Endpoint del Google Apps Script desplegado como web app.
    Con la constante vacía el formulario funciona igual y guarda en localStorage. */
-const ENDPOINT = "https://script.google.com/macros/s/AKfycby9d2H8mrarN-8ljW3xDh6SJDCVl3pWkrW0dQynUIoo2T85_osLnKYvMRbp2tuyhd4/exec";
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbyHD23UwAuBXE_RDoQMyVPE1yNYYiJCcaax1oeeXQJy-ACQ7vd8G2yAZQQgvCFedeK-bg/exec";
 
 /* Respaldo si el envío falla dos veces: el botón abre el correo de la persona con las respuestas escritas. */
 const RESPALDO_MAIL = "perez.mvictoria@gmail.com";
