@@ -198,7 +198,8 @@ label.fl{display:block;font-weight:600;font-size:16px;margin-bottom:8px;color:va
 .otro-wrap > .sub-lbl{margin:2px 0 8px}
 .otro-wrap > .chips{margin-bottom:4px}
 .item-body .chips + .sub-lbl{margin-top:2px}
-#tools-lista.off{opacity:.4;pointer-events:none}
+#tools-lista.off,.ops-lista.off{opacity:.4;pointer-events:none}
+.ops-lista{display:flex;flex-direction:column;gap:10px;margin-top:6px}
 
 .field.abierta{margin-top:22px;padding-top:20px;border-top:1px solid var(--border-default)}
 .field.abierta .fl{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
@@ -211,17 +212,19 @@ label.fl{display:block;font-weight:600;font-size:16px;margin-bottom:8px;color:va
   padding:12px 16px calc(16px + env(safe-area-inset-bottom));
 }
 .nav-inner{max-width:768px;margin:0 auto;display:flex;gap:12px;align-items:center}
-button.btn{
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
   min-height:48px;font-size:16px;font-weight:600;border-radius:var(--radius-md);cursor:pointer;
   transition:background var(--transition-fast),transform var(--transition-fast);-webkit-tap-highlight-color:transparent;
 }
-button.btn:active{transform:scale(.97)}
-button.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
 .btn.primary{flex:1;border:none;background:var(--color-violet-main);color:var(--color-white);box-shadow:0 2px 6px rgba(74,44,122,0.2)}
 .btn.primary:hover{background:var(--color-violet-deep)}
 .btn.primary:disabled{background:var(--color-violet-soft);cursor:not-allowed;box-shadow:none}
 .btn.ghost{padding:0 20px;border:1.5px solid var(--color-violet-main);background:transparent;color:var(--color-violet-main)}
 .btn.ghost:hover{background:var(--bg-subtle)}
+.btn.ghost:disabled{opacity:.5;cursor:not-allowed}
 .aviso{color:var(--error);font-size:14px;font-weight:600;margin-top:4px;display:none}
 .aviso.on{display:block}
 
@@ -265,6 +268,11 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
 .paso p{font-size:16px;line-height:1.65;color:var(--color-ink)}
 .envio{font-size:14px;color:var(--fg-secondary)}
 .envio.err{color:var(--error);font-weight:600}
+.envio p{margin-bottom:12px}
+.envio-acc{display:flex;flex-wrap:wrap;gap:12px}
+.envio .envio-acc .btn{flex:0 0 auto;min-width:0;margin-left:0;padding:0 24px}
+.equipo{margin-top:28px;padding-top:18px;border-top:1px solid var(--border-default);font-size:14px;color:var(--fg-secondary)}
+.borrar{margin-top:6px;background:none;border:0;padding:4px 0;font:inherit;font-size:14px;font-weight:600;color:var(--color-violet-main);text-decoration:underline;cursor:pointer}
 
 @media(max-width:559px){ .bar-long{display:none} }
 @media(min-width:768px){
@@ -294,7 +302,7 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
   .field.abierta input{max-width:560px}
   .nav{padding:16px 40px calc(16px + env(safe-area-inset-bottom))}
   .nav-inner{justify-content:space-between}
-  button.btn{min-height:52px;font-size:17px}
+  .btn{min-height:52px;font-size:17px}
   .btn.ghost{padding:0 28px}
   .btn.primary{flex:0 0 auto;min-width:200px;padding:0 32px;margin-left:auto}
   .resultado{padding-top:8px}
@@ -348,6 +356,9 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
 /* Endpoint del Google Apps Script desplegado como web app.
    Con la constante vacía el formulario funciona igual y guarda en localStorage. */
 const ENDPOINT = "https://script.google.com/macros/s/AKfycby9d2H8mrarN-8ljW3xDh6SJDCVl3pWkrW0dQynUIoo2T85_osLnKYvMRbp2tuyhd4/exec";
+
+/* Respaldo si el envío falla dos veces: el botón abre el correo de la persona con las respuestas escritas. */
+const RESPALDO_MAIL = "perez.mvictoria@gmail.com";
 
 /* ---------- contenido de las preguntas ---------- */
 
@@ -404,6 +415,7 @@ const Q = [
     {t:"Armar algo que se ejecuta solo cada vez que hace falta",v:4},
     OTRA
   ],
+  ninguna:"Todavía ninguna",
   ejemplo:{cuando:v=>v>=3, label:"Contá en una línea qué hiciste.",
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Una línea alcanza"}},
 
@@ -573,7 +585,8 @@ const Q = [
     {t:"Planillas del equipo: horarios, licencias, sueldos",v:0,sensible:true},
     {t:"Precios, costos, ventas o márgenes",v:0,sensible:true},
     OTRA
-  ]},
+  ],
+  ninguna:"Todavía nada"},
 
 /* 14 · P16 recomendación — abierta, opcional */
 {id:"p16", tipo:"largo", eyebrow:"Tu aporte · opcional",
@@ -635,6 +648,19 @@ const R = {};              // respuestas crudas
 let paso = 0;              // 0 = intro · 1..pasos = preguntas · pasos+1 = resultado
 const UI = {};             // qué pieza del acordeón está abierta en cada paso
 let resultado = null;
+let registro = null;       // lo que muestra la pantalla de resultado: {fecha, resultado, data, registrado}
+let inicio = "nuevo";      // pantalla de inicio: nuevo · retomar (respuestas en curso) · respondido
+let enviando = false, intentos = 0, ultimoRender = 0, ignorarPop = false;
+
+/* ---------- memoria del navegador ----------
+   Las respuestas en curso y el último resultado quedan en localStorage, solo en este navegador.
+   Si el navegador bloquea el almacenamiento, el formulario funciona igual, sin memoria. */
+const K_ESTADO = "barometro_divino_estado", K_RESULTADO = "barometro_divino_resultado";
+function leer(k){ try{ return JSON.parse(localStorage.getItem(k)) }catch(e){ return null } }
+function escribir(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
+function borrar(k){ try{ localStorage.removeItem(k) }catch(e){} }
+function vaciar(o){ Object.keys(o).forEach(k=>delete o[k]) }
+function guardarEstado(){ if(paso>0 && !registro && paso<=visibles().length) escribir(K_ESTADO,{R,UI,paso}) }
 
 /* los pasos que aplican: el detalle de herramientas depende de lo marcado */
 const visibles = () => Q.filter(q=>!q.si || q.si());
@@ -660,16 +686,20 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","
 
 function render(){
   window.scrollTo(0,0);
+  ultimoRender = Date.now();
   const V = visibles(), T = V.length;
   bar.hidden = (paso===0 || paso>T);
+  btnNext.disabled = btnBack.disabled = false;
   if(paso===0) return renderIntro();
   if(paso>T) return renderResultado();
   const q = V[paso-1];
   renderPregunta(q);
   actualizarContador(q);
   btnBack.hidden = false;
+  btnBack.textContent = "Atrás";
   btnNext.textContent = paso===T ? "Ver mi resultado" : "Siguiente";
   nav.hidden = false;
+  guardarEstado();
 }
 
 /* barra: pasos. Segunda línea: preguntas dentro del paso, cuando hay más de una */
@@ -680,12 +710,21 @@ function actualizarContador(q){
   $("#countsub").textContent = q.subProgreso ? q.subProgreso() : "";
 }
 
+const ICONO_NOTA = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4B2C7A" stroke-width="2.5" stroke-linecap="round"><path d="M12 8h.01"/><path d="M12 12v4"/></svg>`;
+
 function renderIntro(){
-  btnBack.hidden = true;
-  btnNext.textContent = "Empezar";
   nav.hidden = false;
+  if(inicio==="respondido") return renderRespondido();
+  btnBack.hidden = inicio!=="retomar";
+  btnBack.textContent = "Empezar de nuevo";
+  btnNext.textContent = inicio==="retomar" ? "Seguir donde quedaste" : "Empezar";
+  const retomar = inicio!=="retomar" ? "" : `
+    <div class="nota">
+      <span class="nota-ico" aria-hidden="true">${ICONO_NOTA}</span>
+      <p><strong>Tenés respuestas guardadas en este navegador.</strong> Podés seguir donde quedaste o empezar de nuevo.</p>
+    </div>`;
   shell.innerHTML = `
-  <div class="intro">
+  <div class="intro">${retomar}
    <div class="card">
     <h1>¿Cuánto usás la IA?</h1>
     <p class="lead">Quizás escuchaste hablar de ChatGPT o Claude, o ya las usás con asiduidad. Tal vez usás el Copilot en tu correo, Rovo en Jira, la IA de Adobe o la de Qlik. Estés donde estés en la adopción de la IA, te queremos invitar a participar de este proceso.</p>
@@ -693,9 +732,26 @@ function renderIntro(){
     <p><strong>Te presentamos el barómetro de adopción de IA:</strong> una herramienta que vas a usar al comienzo y al cierre del proceso para medir tu avance en la adopción de esta nueva forma de trabajar con inteligencia artificial. La idea es que puedas reconocer en qué punto estás y entender cuál es tu siguiente paso para seguir avanzando. Tiene 15 pasos con preguntas y te lleva entre 10 y 15 minutos.</p>
    </div>
     <div class="nota">
-      <span class="nota-ico" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4B2C7A" stroke-width="2.5" stroke-linecap="round"><path d="M12 8h.01"/><path d="M12 12v4"/></svg></span>
+      <span class="nota-ico" aria-hidden="true">${ICONO_NOTA}</span>
       <p><strong>Por qué te pedimos tus datos.</strong> El formulario es identificado para ubicar a cada persona en una etapa del proceso. De tus respuestas, Divino recibe tu nombre, correo, área, cargo y el resultado del barómetro. El resto de la información se analiza en conjunto, en forma estadística.</p>
     </div>
+  </div>`;
+}
+
+/* quien ya respondió en este navegador: ver el resultado guardado o responder de nuevo */
+function renderRespondido(){
+  const reg = leer(K_RESULTADO) || {};
+  const fecha = reg.fecha ? new Date(reg.fecha).toLocaleDateString("es-UY",{day:"numeric",month:"long",year:"numeric"}) : "";
+  btnBack.hidden = false;
+  btnBack.textContent = "Responder de nuevo";
+  btnNext.textContent = "Ver mi resultado";
+  shell.innerHTML = `
+  <div class="intro">
+   <div class="card">
+    <h1>Ya respondiste el barómetro</h1>
+    <p class="lead">Tu resultado${fecha ? ` del ${esc(fecha)}` : ""} quedó guardado en este navegador.</p>
+    <p>Si estás en la medición del cierre del proceso, respondé de nuevo con el mismo correo.</p>
+   </div>
   </div>`;
 }
 
@@ -724,27 +780,32 @@ function bloqueCampos(q){
     <label class="fl" for="c-${c.id}">${esc(c.label)}</label>
     <input type="${c.mail?"email":"text"}" id="c-${c.id}" placeholder="${esc(c.ph)}"
       value="${esc(R[c.id]||"")}" autocomplete="${c.ac}"
-      autocapitalize="${c.cap}" spellcheck="false"></div>`).join("");
+      autocapitalize="${c.cap}" spellcheck="false" maxlength="200"></div>`).join("");
 }
 
 function bloqueTexto(q){
   return `<div class="field"><input type="text" id="in" placeholder="${esc(q.ph)}"
-    value="${esc(R[q.id]||"")}" autocomplete="off"></div>`;
+    value="${esc(R[q.id]||"")}" autocomplete="off" maxlength="2000"></div>`;
 }
 function bloqueLargo(q){
-  return `<div class="field"><textarea id="in" placeholder="${esc(q.ph)}">${esc(R[q.id]||"")}</textarea></div>`;
+  return `<div class="field"><textarea id="in" maxlength="2000" placeholder="${esc(q.ph)}">${esc(R[q.id]||"")}</textarea></div>`;
 }
 
 function bloqueOps(q,tipo){
   const sel = R[q.id];
+  const nin = !!q.ninguna && R[q.id+"_ninguna"]===true;
   let h = `<div class="opts">`;
+  // «Todavía ninguna» va primera; marcada, bloquea el resto de la lista, igual que en P13
+  if(q.ninguna) h += `<label class="opt${nin?" sel":""}" id="ninguna">
+      <span class="mark check"></span><span class="opt-txt">${esc(q.ninguna)}</span></label>
+    <div class="ops-lista${nin?" off":""}" id="ops-lista">`;
   q.ops.forEach((op,i)=>{
     const on = tipo==="radio" ? sel===i : Array.isArray(sel)&&sel.includes(i);
     h += `<label class="opt${on?" sel":""}" data-i="${i}">
       <span class="mark ${tipo}"></span>
       <span class="opt-txt">${esc(op.t)}</span></label>`;
     if(op.otra) h += `<div class="otro-wrap${on?" on":""}" id="ow-${i}">
-      <input type="text" id="otro-${i}" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>`;
+      <input type="text" id="otro-${i}" maxlength="2000" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>`;
     if(op.sigue){                      // pregunta que se abre al marcar esta opción
       const sv = R[op.sigue.id];
       h += `<div class="otro-wrap${on?" on":""}" id="sg-${i}">
@@ -754,6 +815,7 @@ function bloqueOps(q,tipo){
     }
     if(pideEjemplo(q,i)) h += campoEjemplo(q, i, on);
   });
+  if(q.ninguna) h += `</div>`;
   return h+`</div>`;
 }
 
@@ -766,7 +828,7 @@ function pideEjemplo(q,i){
 function campoEjemplo(q, k, on){
   return `<div class="otro-wrap ejemplo-wrap${on?" on":""}" id="ejw-${k}">
     <label for="ej-${k}">${esc(q.ejemplo.label)}</label>
-    <input type="text" id="ej-${k}" placeholder="${esc(q.ejemplo.ph)}" value="${esc(ejemplos(q.id)[k]||"")}"></div>`;
+    <input type="text" id="ej-${k}" maxlength="2000" placeholder="${esc(q.ejemplo.ph)}" value="${esc(ejemplos(q.id)[k]||"")}"></div>`;
 }
 
 function bloqueHerramientas(q){
@@ -792,7 +854,7 @@ function bloqueHerramientas(q){
     <label class="opt tool${sel.includes("__otra")?" sel":""}" data-name="__otra">
       <span class="mark check"></span><span class="opt-txt">${esc(OTRA.t)}</span></label>
     <div class="otro-wrap${sel.includes("__otra")?" on":""}" id="ow-tool">
-      <input type="text" id="otro-tool" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>
+      <input type="text" id="otro-tool" maxlength="200" placeholder="Escribí cuál" value="${esc(R[q.id+"_otra"]||"")}"></div>
   </div>`;
   h += `</div></div>`;
   return h;
@@ -836,7 +898,7 @@ function bloqueMatriz(q){
     <div class="field abierta">
       <label class="fl" for="p8-abierta">${esc(q.abierta.label)} <span class="opc">Opcional</span></label>
       <p class="hint">${esc(q.abierta.hint)}</p>
-      <input type="text" id="p8-abierta" placeholder="${esc(q.abierta.ph)}" value="${esc(R.p8_abierta||"")}">
+      <input type="text" id="p8-abierta" maxlength="2000" placeholder="${esc(q.abierta.ph)}" value="${esc(R.p8_abierta||"")}">
     </div>`;
   return h;
 }
@@ -925,7 +987,7 @@ function cablear(q){
         const arr = R[q.id] = R[q.id]||[];
         const k = arr.indexOf(i);
         if(k>=0){arr.splice(k,1);l.classList.remove("sel")}
-        else{arr.push(i);l.classList.add("sel")}
+        else{arr.push(i);l.classList.add("sel");R[q.id+"_ninguna"]=false;if($("#ninguna"))$("#ninguna").classList.remove("sel")}
         if(q.ops[i].otra){
           const w = $("#ow-"+i);
           w.classList.toggle("on",arr.includes(i));
@@ -945,6 +1007,20 @@ function cablear(q){
         }
         limpiar();
       });
+    });
+    if(q.ninguna) $("#ninguna").addEventListener("click",()=>{
+      const on = !R[q.id+"_ninguna"];
+      R[q.id+"_ninguna"] = on;
+      $("#ninguna").classList.toggle("sel",on);
+      $("#ops-lista").classList.toggle("off",on);
+      if(!on) return;
+      // se descarta lo marcado: opciones, «Otra», preguntas que se abren y ejemplos
+      (R[q.id]||[]).forEach(i=>{ const s = q.ops[i].sigue; if(s) delete R[s.id] });
+      R[q.id] = []; R[q.id+"_otra"] = ""; R[q.id+"_ej"] = {};
+      const lista = $("#ops-lista");
+      lista.querySelectorAll(".opt,.chip").forEach(o=>o.classList.remove("sel"));
+      lista.querySelectorAll(".otro-wrap").forEach(w=>w.classList.remove("on"));
+      lista.querySelectorAll("input").forEach(x=>x.value="");
     });
     shell.querySelectorAll(".chips[data-sigue]").forEach(ch=>{
       const s = q.ops[+ch.dataset.sigue].sigue;
@@ -1050,6 +1126,7 @@ function cablearHerramientas(q){
         w.classList.toggle("on",arr.includes("__otra"));
         if(arr.includes("__otra")) $("#otro-tool").focus(); else { R[q.id+"_otra"]=""; $("#otro-tool").value="" }
       }
+      despejarBloque($("#tools-fin"));   // el error se marca junto a «Otra» y se resuelve con cualquier herramienta
       actualizarContador(q);   // el total de pasos cambia si aparece o se va el detalle
     });
   });
@@ -1063,6 +1140,7 @@ function cablearHerramientas(q){
       R[q.id]=[]; R[q.id+"_otra"]=""; $("#otro-tool").value="";
       shell.querySelectorAll(".opt.tool").forEach(o=>o.classList.remove("sel"));
       $("#ow-tool").classList.remove("on");
+      despejarBloque($("#tools-fin"));
     }
     actualizarContador(q);
   });
@@ -1124,8 +1202,12 @@ function despejar(t){
   const inv = t.closest && t.closest(".invalid");
   if(!inv) return;
   if(inv.classList.contains("item")) return;   // la pieza se despeja al completarse
-  inv.classList.remove("invalid");
-  const s = inv.nextElementSibling;
+  despejarBloque(inv);
+}
+function despejarBloque(el){
+  if(!el || !el.classList.contains("invalid")) return;
+  el.classList.remove("invalid");
+  const s = el.nextElementSibling;
   if(s && s.classList.contains("err")) s.remove();
 }
 
@@ -1188,7 +1270,8 @@ function validar(q){
   if(q.tipo==="multi" && !q.grupos){
     const arr = R[q.id]||[];
     const iOtra = q.ops.findIndex(o=>o.otra);
-    if(!arr.length) marcar(shell.querySelector(".opts"),"Marcá al menos una opción para seguir.");
+    if(!arr.length && !R[q.id+"_ninguna"])
+      marcar(shell.querySelector(".opts"), q.ninguna ? `Marcá al menos una opción, o «${q.ninguna}».` : "Marcá al menos una opción para seguir.");
     else if(arr.includes(iOtra)) texto($("#otro-"+iOtra),R[q.id+"_otra"],MSG_OTRA);
     [...arr].sort((a,b)=>a-b).forEach(i=>{
       const s = q.ops[i].sigue;
@@ -1398,10 +1481,16 @@ function renderResultado(){
       <p>${esc(r.paso)}</p>
     </div>
 
-    <div class="envio" id="envio">Guardando tu respuesta…</div>
+    <div class="envio" id="envio"></div>
+
+    <div class="equipo">
+      <p>¿Usás una computadora compartida? Borrá tus datos al terminar.</p>
+      <button type="button" class="borrar" id="borrar">Borrar mis datos de este equipo</button>
+    </div>
   </div>`;
 
-  enviar();
+  pintarEnvio();
+  $("#borrar").addEventListener("click",borrarDatos);
 }
 
 /* ---------- envío ---------- */
@@ -1410,7 +1499,7 @@ function payload(){
   const r = resultado;
   const nombreOp = (id,i)=>{const q=Q.find(x=>x.id===id);return (i===undefined||!q.ops[i])?"":q.ops[i].t};
   // la respuesta de una pregunta que se abre va entre paréntesis: «Hacerle preguntas… (Me responde mejor)»
-  const listaOps = (id)=>{const q=Q.find(x=>x.id===id);return (R[id]||[]).slice().sort((a,b)=>a-b).map(i=>{
+  const listaOps = (id)=>{const q=Q.find(x=>x.id===id);if(q.ninguna&&R[id+"_ninguna"])return q.ninguna;return (R[id]||[]).slice().sort((a,b)=>a-b).map(i=>{
     const op = q.ops[i], s = op.sigue;
     return s && R[s.id]!==undefined ? `${op.t} (${s.ops[R[s.id]]})` : op.t;
   }).join(" | ")};
@@ -1464,46 +1553,187 @@ function detalleTexto(parte){
   }).join(" | ");
 }
 
-async function enviar(){
-  const data = payload();
-  const box = $("#envio");
-  try{ localStorage.setItem("barometro_divino", JSON.stringify(data)) }catch(e){}
-
+/* Devuelve true cuando la hoja recibió la respuesta. */
+async function enviar(data){
   if(!ENDPOINT){
-    box.textContent = "Modo local: la respuesta quedó en este navegador.";
     console.log("[barómetro] payload", data);
-    return;
+    return true;
   }
+  const ac = new AbortController();
+  const corte = setTimeout(()=>ac.abort(), 20000);   // 20 s sin respuesta cuenta como fallo
   try{
     const res = await fetch(ENDPOINT,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},   // request simple, sin preflight
-      body:JSON.stringify(data)
+      body:JSON.stringify(data),
+      keepalive:true,                                        // termina aunque la persona cierre la pestaña
+      signal:ac.signal
     });
+    // Google redirige cuando el script ya corrió y escribió la fila:
+    // si después falla la página de respuesta, la respuesta igual quedó registrada
+    if(res.redirected && !res.ok) return true;
     const j = await res.json().catch(()=>({}));
     if(!res.ok || !j.ok) throw new Error(j.error || res.status);
-    box.textContent = "Tu respuesta quedó registrada.";
+    return true;
   }catch(e){
-    box.className = "envio err";
-    box.textContent = "Tu resultado está calculado y guardado en este navegador. El envío falló: avisale a quien te compartió el link.";
     console.error("[barómetro] envío", e);
+    return false;
+  }finally{
+    clearTimeout(corte);
   }
 }
 
-/* ---------- navegación ---------- */
+/* El resultado aparece cuando la hoja confirma. Primer fallo: aviso y «Reintentar».
+   Segundo fallo: aparece el resultado, con el envío por correo como respaldo. */
+async function enviarRespuestas(){
+  resultado = calcular();
+  const data = payload();
+  const aviso = $("#aviso");
+  aviso.classList.remove("on");
+  enviando = true;
+  btnNext.disabled = btnBack.disabled = true;
+  btnNext.textContent = "Enviando…";
+  const ok = await enviar(data);
+  enviando = false;
+  btnNext.disabled = btnBack.disabled = false;
+  if(ok || ++intentos>=2){
+    intentos = 0;
+    return mostrarResultado({fecha:new Date().toISOString(), resultado, data, registrado:ok});
+  }
+  btnNext.textContent = "Reintentar";
+  aviso.textContent = "No pudimos enviar tus respuestas. Revisá tu conexión y tocá «Reintentar».";
+  aviso.classList.add("on");
+}
+
+function mostrarResultado(reg){
+  registro = reg;
+  resultado = reg.resultado;
+  escribir(K_RESULTADO, reg);
+  borrar(K_ESTADO);
+  paso = visibles().length + 1;
+  history.pushState({paso},"");
+  render();
+}
+
+function pintarEnvio(){
+  const box = $("#envio");
+  if(registro.registrado){
+    box.className = "envio";
+    box.textContent = "Tu respuesta quedó registrada.";
+    return;
+  }
+  box.className = "envio err";
+  box.innerHTML = `<p>No pudimos registrar tu respuesta. Mandala por correo o probá de nuevo.</p>
+    <div class="envio-acc">
+      <a class="btn primary" href="${esc(mailtoRespaldo(registro.data))}">Enviar por correo</a>
+      <button type="button" class="btn ghost" id="reintentar">Reintentar</button>
+    </div>`;
+  $("#reintentar").addEventListener("click",async e=>{
+    const b = e.currentTarget;
+    b.disabled = true; b.textContent = "Enviando…";
+    const ok = await enviar(registro.data);
+    if(ok){ registro.registrado = true; escribir(K_RESULTADO, registro) }
+    pintarEnvio();
+    if(!ok) $("#envio p").textContent = "Seguimos sin poder registrarla. Mandala por correo o probá más tarde.";
+  });
+}
+
+/* las respuestas en texto, una por línea: «clave: valor» */
+function mailtoRespaldo(data){
+  const cuerpo = Object.entries(data)
+    .filter(([,v])=>v!=="" && v!==undefined && v!==null)
+    .map(([k,v])=>`${k}: ${v}`).join("\n");
+  const asunto = `Barómetro · respaldo de ${data.nombre || "una respuesta"}`;
+  return `mailto:${RESPALDO_MAIL}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+}
+
+function borrarDatos(){
+  if(registro && !registro.registrado &&
+     !confirm("Tu respuesta todavía no quedó registrada. ¿Borrarla igual de este equipo?")) return;
+  borrar(K_ESTADO); borrar(K_RESULTADO);
+  vaciar(R); vaciar(UI);
+  resultado = registro = null;
+  inicio = "nuevo"; intentos = 0; paso = 0;
+  history.replaceState({paso:0},"");
+  render();
+}
+
+/* ---------- navegación ----------
+   Cada paso es una entrada del historial: el «atrás» del navegador retrocede un paso. */
+
+function irA(n){
+  paso = n;
+  history.pushState({paso:n},"");
+  render();
+}
+
+/* en el inicio, el botón de la izquierda es «Empezar de nuevo» o «Responder de nuevo» */
+function empezarDeNuevo(){
+  const habiaRespuesta = !!leer(K_RESULTADO);
+  if(inicio==="retomar") borrar(K_ESTADO);
+  vaciar(R); vaciar(UI);
+  inicio = inicio==="retomar" && habiaRespuesta ? "respondido" : "nuevo";
+  render();
+}
 
 btnNext.addEventListener("click",()=>{
+  if(enviando || Date.now()-ultimoRender<400) return;   // un doble toque no valida la pantalla recién abierta
+  if(paso===0){
+    if(inicio==="respondido"){
+      const reg = leer(K_RESULTADO);
+      if(reg && reg.resultado) return mostrarResultado(reg);
+    }
+    if(inicio==="retomar"){
+      const e = leer(K_ESTADO);
+      inicio = "nuevo";
+      if(e && e.R){
+        Object.assign(R, e.R); Object.assign(UI, e.UI||{});
+        const destino = Math.min(e.paso, visibles().length);
+        for(let n=1;n<destino;n++) history.pushState({paso:n},"");
+        return irA(destino);
+      }
+    }
+    inicio = "nuevo";
+    return irA(1);
+  }
   const V = visibles();
-  if(paso>0 && paso<=V.length && !validar(V[paso-1])) return;
-  if(paso===V.length){ resultado = calcular(); paso++; return render() }
-  paso++; render();
+  if(!validar(V[paso-1])) return;
+  if(paso===V.length) return enviarRespuestas();
+  irA(paso+1);
 });
-btnBack.addEventListener("click",()=>{ if(paso>0){paso--; render()} });
 
-/* la marca de error se despeja en cuanto la persona toca el campo marcado */
-shell.addEventListener("input",e=>despejar(e.target));
-shell.addEventListener("click",e=>despejar(e.target));
+btnBack.addEventListener("click",()=>{
+  if(enviando) return;
+  if(paso===0) return empezarDeNuevo();
+  history.back();
+});
 
+window.addEventListener("popstate",e=>{
+  if(ignorarPop){ ignorarPop = false; return }
+  const destino = e.state && typeof e.state.paso==="number" ? e.state.paso : 0;
+  const deshacer = ()=>{ ignorarPop = true; destino<paso ? history.forward() : history.back() };
+  if(enviando) return deshacer();                          // mientras envía, se queda en la pantalla
+  if(registro || (paso===0 && inicio==="respondido")){     // después de responder, atrás lleva al inicio
+    registro = resultado = null;
+    vaciar(R); vaciar(UI);
+    inicio = leer(K_RESULTADO) ? "respondido" : "nuevo";
+    paso = 0;
+    return render();
+  }
+  const V = visibles();
+  if(destino>paso && paso>0 && !validar(V[paso-1])) return deshacer();   // adelante, solo con el paso completo
+  paso = Math.min(destino, V.length);
+  render();
+});
+
+/* la marca de error se despeja en cuanto la persona toca el campo marcado; cada cambio queda guardado */
+shell.addEventListener("input",e=>{ despejar(e.target); guardarEstado() });
+shell.addEventListener("click",e=>{ despejar(e.target); guardarEstado() });
+
+/* ---------- arranque ---------- */
+const previo = leer(K_ESTADO);
+inicio = previo && previo.paso>0 ? "retomar" : (leer(K_RESULTADO) ? "respondido" : "nuevo");
+history.replaceState({paso:0},"");
 render();
 </script>
 </body>
