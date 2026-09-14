@@ -1639,11 +1639,13 @@ async function enviar(data){
   const ac = new AbortController();
   const corte = setTimeout(()=>ac.abort(), 45000);   // 45 s sin respuesta cuenta como fallo; el script espera su turno 10 s como máximo
   try{
+    const body = JSON.stringify(data);
     const res = await fetch(ENDPOINT,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},   // request simple, sin preflight
-      body:JSON.stringify(data),
-      keepalive:true,                                        // termina aunque la persona cierre la pestaña
+      body,
+      // termina aunque la persona cierre la pestaña; el navegador lo rechaza por encima de 64 KB
+      keepalive:new Blob([body]).size < 60000,
       signal:ac.signal
     });
     // Google redirige cuando el script ya corrió y escribió la fila:
