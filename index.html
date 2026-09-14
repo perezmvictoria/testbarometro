@@ -517,8 +517,8 @@ const Q = [
   abierta:{label:"¿Hay algún otro concepto de IA que manejes y te parezca importante mencionar?",
     hint:"Nos ayuda a descubrir lo que ya se sabe en Divino.",
     ph:"Qué concepto y para qué lo usás"},
-  /* el ejemplo se pide una sola vez, si marcó «lo uso habitualmente» en
-     skills (10), conectores (11) o agentes (12) */
+  /* cada fila de skills (10), conectores (11) o agentes (12) marcada «Habitualmente»
+     pide su propio ejemplo dentro de la fila (6.1_barometro.md, sección de ejemplos) */
   ejemploFilas:[10,11,12],
   ejemplo:{label:"Contá para qué lo usás.",
     why:"", ph:"Para qué lo usás"}},
@@ -775,7 +775,6 @@ function renderRespondido(){
    <div class="card">
     <h1>Ya respondiste el barómetro</h1>
     <p class="lead">Tu resultado${fecha ? ` del ${esc(fecha)}` : ""} quedó guardado en este navegador.</p>
-    <p>Si estás en la medición del cierre del proceso, respondé de nuevo con el mismo correo.</p>
    </div>
   </div>`;
 }
@@ -1076,6 +1075,7 @@ function cablear(q){
         };
         if(b.dataset.r==="no"){                 // no sabe qué es: 0, y se cierra
           R.q7_matriz[f] = 0; delete UI.q7_matriz_sabe[f]; uso.hidden = true; pedir(false);
+          despejarBloque(uso.querySelector(".escala"));   // el error de «cuánto lo usás» ya no corresponde
           it.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
           resp(); completarItem(cont,q.id,it);
         } else if(b.dataset.r==="si"){          // sabe qué es: se abre cuánto lo usa
