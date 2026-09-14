@@ -272,6 +272,8 @@ input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-
 .envio p{margin-bottom:12px}
 .envio-acc{display:flex;flex-wrap:wrap;gap:12px}
 .envio .envio-acc .btn{flex:0 0 auto;min-width:0;margin-left:0;padding:0 24px}
+/* mientras se reintenta el envío, correo y borrar quedan en pausa */
+.envio .btn.off,.borrar:disabled{opacity:.45;pointer-events:none;cursor:default}
 .equipo{margin-top:28px;padding-top:18px;border-top:1px solid var(--border-default);font-size:14px;color:var(--fg-secondary)}
 .borrar{margin-top:6px;background:none;border:0;padding:4px 0;font:inherit;font-size:14px;font-weight:600;color:var(--color-violet-main);text-decoration:underline;cursor:pointer}
 
@@ -392,7 +394,7 @@ const Q = [
   campos:[
     {id:"q1_nombre", label:"Nombre y apellido", ph:"Nombre y apellido", ac:"name", cap:"words"},
     {id:"q1_mail",   label:"Tu correo", ph:"tu@correo.com", mail:true, ac:"email", cap:"off"},
-    {id:"q1_area",   label:"Área", ph:"Como la dirías vos", ac:"organization", cap:"sentences",
+    {id:"q1_area",   label:"Área", ph:"Como la dirías vos", ac:"off", cap:"sentences",   // «organization» es el nombre de la empresa
       err:"Escribí tu área para seguir."},
     {id:"q1_cargo",  label:"Cargo", ph:"Como lo dirías vos", ac:"organization-title", cap:"sentences",
       err:"Escribí tu cargo para seguir."}
@@ -661,7 +663,10 @@ const UI = {};             // qué pieza del acordeón está abierta en cada pas
 let resultado = null;
 let registro = null;       // lo que muestra la pantalla de resultado: {fecha, resultado, data, registrado}
 let inicio = "nuevo";      // pantalla de inicio: nuevo · retomar (respuestas en curso) · respondido
-let enviando = false, intentos = 0, ultimoRender = 0, ignorarPop = false;
+let enviando = false, intentos = 0, ultimoRender = 0, ignorarPop = false, marcarAlLlegar = false;
+// cada carga de la página firma sus entradas del historial: al recargar, las entradas viejas se reconocen y se saltean
+const SESION = Date.now().toString(36) + Math.random().toString(36).slice(2);
+const entrada = n=>({paso:n, sesion:SESION});
 
 /* ---------- memoria del navegador ----------
    Las respuestas en curso y el último resultado quedan en localStorage, solo en este navegador.
@@ -759,8 +764,14 @@ function renderRespondido(){
   btnBack.hidden = false;
   btnBack.textContent = "Responder de nuevo";
   btnNext.textContent = "Ver mi resultado";
+  // el envío falló: se avisa acá, porque desde el resultado se reintenta o se manda por correo
+  const pendiente = reg.registrado!==false ? "" : `
+    <div class="nota">
+      <span class="nota-ico" aria-hidden="true">${ICONO_NOTA}</span>
+      <p><strong>Tu respuesta todavía no llegó.</strong> Entrá a tu resultado y tocá «Reintentar» o «Enviar por correo».</p>
+    </div>`;
   shell.innerHTML = `
-  <div class="intro">
+  <div class="intro">${pendiente}
    <div class="card">
     <h1>Ya respondiste el barómetro</h1>
     <p class="lead">Tu resultado${fecha ? ` del ${esc(fecha)}` : ""} quedó guardado en este navegador.</p>
@@ -1206,6 +1217,8 @@ function completarItem(cont,key,it){
    El texto de «Otra» y el ejemplo son obligatorios cuando aparecen. */
 
 const MIN_TEXTO = 15;     // caracteres: mismo mínimo para «Otra», ejemplos y abiertas
+// «Otra» en herramientas pide un nombre, que suele ser corto: 3 caracteres con al menos una letra
+const nombreHerramientaOk = v=>(v||"").length>=3 && /\p{L}/u.test(v);
 
 function limpiarErrores(){
   shell.querySelectorAll(".invalid").forEach(e=>e.classList.remove("invalid"));
@@ -1302,6 +1315,8 @@ function validar(q){
       marcar($("#tools-fin"),"Marcá al menos una herramienta, o «Todavía ninguna».");
     if(arr.includes("__otra") && !R[q.id+"_otra"])
       marcar($("#otro-tool"),"Escribí qué otra herramienta usás.");
+    else if(arr.includes("__otra") && !nombreHerramientaOk(R[q.id+"_otra"]))
+      marcar($("#otro-tool"),"Escribí el nombre de la herramienta.");
   }
 
   // acordeón: se marcan las piezas pendientes y se abre la primera
@@ -1371,7 +1386,7 @@ function completo(q){
   if(q.tipo==="multi" && q.grupos){
     const arr = R[q.id]||[];
     if(!arr.length) return !!R[q.id+"_ninguna"];
-    return !arr.includes("__otra") || !!R[q.id+"_otra"];
+    return !arr.includes("__otra") || nombreHerramientaOk(R[q.id+"_otra"]);
   }
   if(q.tipo==="matriz"){
     for(let f=1;f<=15;f++) if(!filaCompleta(q,f)) return false;
@@ -1562,7 +1577,7 @@ function payload(){
   }).join(" | ")};
 
   /* Mismo orden que COLS en barometro_apps-script.gs: nombre y correo, resultado, cargo y área,
-     preguntas y control. La hoja agrega aplicacion, repetida y timestamp_navegador. */
+     preguntas y control. La hoja agrega medicion, repetida y timestamp_navegador. */
   const q7 = Q.find(x=>x.id==="q7_matriz");
   return {
     q1_nombre:R.q1_nombre||"", q1_mail:(R.q1_mail||"").toLowerCase(),
@@ -1646,6 +1661,7 @@ async function enviar(data){
 }
 
 const AVISO_ENVIANDO = "Dejá esta pestaña abierta hasta ver tu resultado: así tus respuestas quedan guardadas.";
+const AVISO_REINTENTO = "Estamos enviando tu respuesta. Esperá en esta pantalla unos segundos, hasta que aparezca la confirmación.";
 
 /* El resultado aparece cuando la hoja confirma. Primer fallo: aviso y «Reintentar».
    Segundo fallo: aparece el resultado, con el envío por correo como respaldo. */
@@ -1677,7 +1693,7 @@ function mostrarResultado(reg){
   escribir(K_RESULTADO, reg);
   borrar(K_ESTADO);
   paso = visibles().length + 1;
-  history.pushState({paso},"");
+  history.pushState(entrada(paso),"");
   render();
 }
 
@@ -1695,11 +1711,17 @@ function pintarEnvio(){
       <button type="button" class="btn ghost" id="reintentar">Reintentar</button>
     </div>`;
   $("#reintentar").addEventListener("click",async e=>{
-    const b = e.currentTarget;
+    const b = e.currentTarget, reg = registro, borrarBtn = $("#borrar");
     b.disabled = true; b.textContent = "Enviando…";
-    $("#envio p").textContent = AVISO_ENVIANDO;
-    const ok = await enviar(registro.data);
-    if(ok){ registro.registrado = true; escribir(K_RESULTADO, registro) }
+    $("#envio p").textContent = AVISO_REINTENTO;
+    $("#envio .btn.primary").classList.add("off");
+    borrarBtn.disabled = true;
+    enviando = true;                          // popstate deshace el «atrás» mientras envía
+    const ok = await enviar(reg.data);
+    enviando = false;
+    if(ok){ reg.registrado = true; escribir(K_RESULTADO, reg) }   // referencia propia: vale aunque la pantalla haya cambiado
+    if(registro!==reg || !document.body.contains(borrarBtn)) return;
+    borrarBtn.disabled = false;
     pintarEnvio();
     if(!ok) $("#envio p").textContent = "Seguimos sin poder registrarla. Mandala por correo o probá más tarde.";
   });
@@ -1715,13 +1737,14 @@ function mailtoRespaldo(data){
 }
 
 function borrarDatos(){
+  if(enviando) return;
   if(registro && !registro.registrado &&
      !confirm("Tu respuesta todavía no quedó registrada. ¿Borrarla igual de este equipo?")) return;
   borrar(K_ESTADO); borrar(K_RESULTADO);
   vaciar(R); vaciar(UI);
   resultado = registro = null;
   inicio = "nuevo"; intentos = 0; paso = 0;
-  history.replaceState({paso:0},"");
+  history.replaceState(entrada(0),"");
   render();
 }
 
@@ -1730,16 +1753,18 @@ function borrarDatos(){
 
 function irA(n){
   paso = n;
-  history.pushState({paso:n},"");
+  history.pushState(entrada(n),"");
   render();
 }
 
 /* en el inicio, el botón de la izquierda es «Empezar de nuevo» o «Responder de nuevo» */
 function empezarDeNuevo(){
-  const habiaRespuesta = !!leer(K_RESULTADO);
-  if(inicio==="retomar") borrar(K_ESTADO);
+  const retomaba = inicio==="retomar";
+  if(retomaba) borrar(K_ESTADO);
   vaciar(R); vaciar(UI);
-  inicio = inicio==="retomar" && habiaRespuesta ? "respondido" : "nuevo";
+  inicio = "nuevo";
+  // «Empezar de nuevo» va directo al paso 1; el resultado anterior sigue guardado hasta el próximo envío
+  if(retomaba) return irA(1);
   render();
 }
 
@@ -1756,7 +1781,7 @@ btnNext.addEventListener("click",()=>{
       if(e && e.R){
         Object.assign(R, e.R); Object.assign(UI, e.UI||{});
         const destino = Math.min(e.paso, visibles().length);
-        for(let n=1;n<destino;n++) history.pushState({paso:n},"");
+        for(let n=1;n<destino;n++) history.pushState(entrada(n),"");
         return irA(destino);
       }
     }
@@ -1766,9 +1791,14 @@ btnNext.addEventListener("click",()=>{
   const V = visibles();
   if(!validar(V[paso-1])) return;
   if(paso===V.length){
-    // un paso incompleto, por ejemplo tras saltar con el historial: se abre ese paso con sus marcas
+    // un paso incompleto, por ejemplo tras saltar con el historial: se abre ese paso con sus marcas.
+    // Se retrocede en el historial (los pasos 1..T están en orden), así «Atrás» sigue llevando al anterior
     const falta = V.findIndex(q=>!completo(q));
-    if(falta>=0){ irA(falta+1); return validar(V[falta]) }
+    if(falta>=0){
+      if(falta+1===paso) return validar(V[falta]);
+      marcarAlLlegar = true;                    // popstate pinta los errores al llegar
+      return history.go(falta+1-paso);
+    }
     return enviarRespuestas();
   }
   irA(paso+1);
@@ -1782,6 +1812,8 @@ btnBack.addEventListener("click",()=>{
 
 window.addEventListener("popstate",e=>{
   if(ignorarPop){ ignorarPop = false; return }
+  if(!e.state || e.state.sesion!==SESION) return history.back();   // entrada de antes de recargar: se saltea hacia atrás
+  const marcar = marcarAlLlegar; marcarAlLlegar = false;   // vale solo para este retroceso
   const destino = e.state && typeof e.state.paso==="number" ? e.state.paso : 0;
   const deshacer = ()=>{ ignorarPop = true; destino<paso ? history.forward() : history.back() };
   if(enviando) return deshacer();                          // mientras envía, se queda en la pantalla
@@ -1797,6 +1829,7 @@ window.addEventListener("popstate",e=>{
   if(destino>paso && paso>0 && !validar(V[paso-1])) return deshacer();   // adelante, solo con el paso completo
   paso = Math.min(destino, V.length);
   render();
+  if(marcar && paso>0) validar(V[paso-1]);
 });
 
 /* la marca de error se despeja en cuanto la persona toca el campo marcado; cada cambio queda guardado */
@@ -1807,7 +1840,7 @@ shell.addEventListener("click",e=>{ despejar(e.target); guardarEstado() });
 /* ---------- arranque ---------- */
 const previo = leer(K_ESTADO);
 inicio = previo && previo.paso>0 ? "retomar" : (leer(K_RESULTADO) ? "respondido" : "nuevo");
-history.replaceState({paso:0},"");
+history.replaceState(entrada(0),"");
 render();
 </script>
 </body>
