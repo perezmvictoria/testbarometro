@@ -1467,13 +1467,14 @@ function calcular(){
     .some(n=>detalleCompleto(n) && CUENTAS[R.det[n].cuenta].personal);
   const datoSensible  = (R.q13_datos||[]).some(i=>qp15.ops[i].sensible);
 
+  // en orden de prioridad por riesgo (6.1_barometro.md, Banderas): la primera con paso define el siguiente paso
   const banderas = [];
-  if(frecuencia>=3 && configuracion<=1)        banderas.push("intensidad_sin_metodo");
   if(profundidad>=3 && verificacion<=1)        banderas.push("uso_sin_control");
-  if(R.q4_configuracion===0 || cerosMatriz>10)               banderas.push("desconocimiento");
-  if(cuentaPersonal && datoSensible)           banderas.push("exposicion");
   if(opP11 && opP11.alta && sumaConfigMatriz<=4) banderas.push("dependencia_sin_arquitectura");
+  if(frecuencia>=3 && configuracion<=1)        banderas.push("intensidad_sin_metodo");
+  if(R.q4_configuracion===0 || cerosMatriz>10)               banderas.push("desconocimiento");
   if(sumaMatriz>=30 && continuidad<=1)         banderas.push("constructor_solitario");
+  if(cuentaPersonal && datoSensible)           banderas.push("exposicion");   // sin paso personal: va al agregado de Inés
 
   /* --- siguiente paso ---
      Regla 1: las banderas mandan.
@@ -1487,12 +1488,17 @@ function calcular(){
   let dimFloja = DESEMPATE[0], peor = 2;
   DESEMPATE.forEach(d=>{ if(norm[d] < peor - 1e-9){ peor = norm[d]; dimFloja = d } });
 
+  // la regla que corresponde, según el documento: va a la hoja aunque su texto todavía falte.
+  // Exposición no tiene paso personal (no figura en PASO_BANDERA) y se saltea
+  const conPaso = banderas.find(b=>b in PASO_BANDERA);
   let origen = "peldano", clave = "peldano_"+peldano.n;
-  if(banderas.length && PASO_BANDERA[banderas[0]]){ origen="bandera"; clave=banderas[0] }
-  else if(peldano.n>=3 && PASO_DIMENSION[dimFloja]){ origen="dimension"; clave=dimFloja }
+  if(conPaso){ origen="bandera"; clave=conPaso }
+  else if(peldano.n>=3){ origen="dimension"; clave=dimFloja }
 
-  const paso = origen==="bandera" ? PASO_BANDERA[clave]
-             : origen==="dimension" ? PASO_DIMENSION[clave]
+  // el texto que ve la persona: la primera bandera con texto, la dimensión si está escrita, o el peldaño
+  const conTexto = banderas.find(b=>PASO_BANDERA[b]);
+  const paso = conTexto ? PASO_BANDERA[conTexto]
+             : peldano.n>=3 && PASO_DIMENSION[dimFloja] ? PASO_DIMENSION[dimFloja]
              : peldano.paso;
 
   return {frecuencia,profundidad,configuracion,diagnostico,verificacion,base,
