@@ -227,6 +227,7 @@ label.fl{display:block;font-weight:600;font-size:16px;margin-bottom:8px;color:va
 .btn.ghost:disabled{opacity:.5;cursor:not-allowed}
 .aviso{color:var(--error);font-size:14px;font-weight:600;margin-top:4px;display:none}
 .aviso.on{display:block}
+.aviso.info{color:var(--fg-secondary)}
 
 /* ---------- errores de validación ---------- */
 input.invalid,textarea.invalid{border-color:var(--error);background:var(--error-bg)}
@@ -378,33 +379,37 @@ const SUPERFICIES = {
 };
 const CUENTAS = [{t:"De Divino"},{t:"Personal gratis",personal:true},{t:"Personal paga",personal:true}];
 
+/* Cada pregunta se llama por su paso en pantalla: q1 a q15, con el paso 12 contado aunque no aparezca.
+   Las columnas de la hoja usan los mismos números. Equivalencia con el documento:
+   q2=P3 · q3=P4 · q4=P5 · q5=P6 · q6=P7 · q7=P8 · q8=P9 · q9=P10 · q10=P11
+   q11=P13 · q12=P12+P14 · q13=P15 · q14=P16 · q15=P17 */
 const Q = [
 
 /* 1 · nombre, correo, área y cargo en una sola pantalla */
-{id:"identidad", tipo:"campos", eyebrow:"Vamos a conocernos",
+{id:"q1_identidad", tipo:"campos", eyebrow:"Vamos a conocernos",
   t:"¿Quién sos y dónde trabajás?",
   hint:"Con estos datos te vamos a poder identificar, junto a tu nivel del barómetro. Es importante que uses el mismo correo cuando repitas el formulario al cierre del proceso: es lo que une las dos respuestas.",
   campos:[
-    {id:"nombre", label:"Nombre y apellido", ph:"Nombre y apellido", ac:"name", cap:"words"},
-    {id:"mail",   label:"Tu correo", ph:"tu@correo.com", mail:true, ac:"email", cap:"off"},
-    {id:"area",   label:"Área", ph:"Como la dirías vos", ac:"organization", cap:"sentences",
+    {id:"q1_nombre", label:"Nombre y apellido", ph:"Nombre y apellido", ac:"name", cap:"words"},
+    {id:"q1_mail",   label:"Tu correo", ph:"tu@correo.com", mail:true, ac:"email", cap:"off"},
+    {id:"q1_area",   label:"Área", ph:"Como la dirías vos", ac:"organization", cap:"sentences",
       err:"Escribí tu área para seguir."},
-    {id:"cargo",  label:"Cargo", ph:"Como lo dirías vos", ac:"organization-title", cap:"sentences",
+    {id:"q1_cargo",  label:"Cargo", ph:"Como lo dirías vos", ac:"organization-title", cap:"sentences",
       err:"Escribí tu cargo para seguir."}
   ]},
 
 /* 2 · P3 frecuencia — sin opción abierta: las opciones cubren el espacio de días */
-{id:"p3", tipo:"radio", eyebrow:"Tu semana", dim:"frecuencia",
+{id:"q2_frecuencia", tipo:"radio", eyebrow:"Tu semana", dim:"frecuencia",
   t:"La semana pasada, ¿cuántos días abriste una IA para algo del trabajo?",
   ops:[{t:"0 días",v:0},{t:"1 día",v:1},{t:"2 o 3 días",v:2},{t:"4 días",v:3},{t:"Los 5",v:4}]},
 
 /* 3 · P4 profundidad */
-{id:"p4", tipo:"multi", eyebrow:"Tu último mes", dim:"profundidad",
+{id:"q3_profundidad", tipo:"multi", eyebrow:"Tu último mes", dim:"profundidad",
   t:"¿Cuáles de estas cosas hiciste con IA en el último mes?",
   hint:"Marcá todas las que apliquen.",
   ops:[
     {t:"Hacerle preguntas, como a un buscador tipo Google",v:1,
-      sigue:{id:"p4_google", t:"Comparada con Google, ¿cómo te resulta?",
+      sigue:{id:"q3_google", t:"Comparada con Google, ¿cómo te resulta?",
         ops:["Me responde mejor","Responde parecido, y me gusta más","Prefiero Google"]}},
     {t:"Traducir o corregir un texto",v:1},
     {t:"Resumir un documento largo",v:1},
@@ -420,7 +425,7 @@ const Q = [
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Una línea alcanza"}},
 
 /* 4 · P5 configuración */
-{id:"p5", tipo:"radio", eyebrow:"Cómo la tenés armada", dim:"configuracion",
+{id:"q4_configuracion", tipo:"radio", eyebrow:"Cómo la tenés armada", dim:"configuracion",
   t:"¿Creaste alguna vez un proyecto o espacio con instrucciones que reutilizás?",
   ops:[
     {t:"No sé qué es eso",v:0},
@@ -434,7 +439,7 @@ const Q = [
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Nombre del proyecto y para qué"}},
 
 /* 5 · P6 diagnóstico */
-{id:"p6", tipo:"radio", eyebrow:"Cuando algo sale mal", dim:"diagnostico",
+{id:"q5_diagnostico", tipo:"radio", eyebrow:"Cuando algo sale mal", dim:"diagnostico",
   t:"La IA te devuelve algo que sirve poco. ¿Qué hacés habitualmente?",
   ops:[
     {t:"Lo descarto y lo hago a mano",v:0},
@@ -446,7 +451,7 @@ const Q = [
   ]},
 
 /* 6 · P7 verificación */
-{id:"p7", tipo:"radio", eyebrow:"Antes de usarlo", dim:"verificacion",
+{id:"q6_verificacion", tipo:"radio", eyebrow:"Antes de usarlo", dim:"verificacion",
   t:"¿Qué hacés con las respuestas que te devuelve la IA antes de usarlas en tu trabajo?",
   ops:[
     {t:"En general, las uso como vienen",v:0},
@@ -460,11 +465,11 @@ const Q = [
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Qué encontraste y cómo"}},
 
 /* 7 · P8 matriz */
-{id:"p8", tipo:"matriz", eyebrow:"Conceptos y prácticas",
+{id:"q7_matriz", tipo:"matriz", eyebrow:"Conceptos y prácticas",
   t:"¿Cuánto sabés sobre estos conceptos de IA?",
   head:"Para cada uno, contanos si sabés qué es. Si lo conocés, marcá cuánto lo usás.",
   subProgreso:()=>{
-    const q = Q.find(x=>x.id==="p8"); let n = 0;
+    const q = Q.find(x=>x.id==="q7_matriz"); let n = 0;
     for(let f=1;f<=15;f++) if(filaCompleta(q,f)) n++;
     return `${n} de 15 preguntas`;
   },
@@ -476,6 +481,11 @@ const Q = [
     uso:[{t:"Nunca",v:1},{t:"Alguna vez",v:2},{t:"Habitualmente",v:3}]
   },
   nombreFila:{10:"Skills",11:"Conectores o MCP",12:"Agentes"},
+  /* nombre de cada fila en la hoja: q7_f01_instrucciones_cuenta … q7_f15_corpus_notebooklm */
+  colFilas:["instrucciones_cuenta","proyectos","formatos_guardados","criterio_archivos",
+    "ventana_contexto","conversacion_saturada","traslado_resumen","eleccion_modelo",
+    "pedidos_guardados","skills","conectores_mcp","agentes",
+    "solo_fuentes_propias","citas_textuales","corpus_notebooklm"],
   grupos:[
     {g:"Configuración de la herramienta", filas:[
       "Instrucciones tuyas guardadas a nivel de cuenta, que aplican a todas tus conversaciones",
@@ -512,7 +522,7 @@ const Q = [
     why:"", ph:"Para qué lo usás"}},
 
 /* 8 · P9 dónde queda */
-{id:"p9", tipo:"radio", eyebrow:"Dónde lo guardás", dim:"continuidad",
+{id:"q8_continuidad", tipo:"radio", eyebrow:"Dónde lo guardás", dim:"continuidad",
   t:"Cuando la IA te ayuda con algo, ¿dónde guardás el resultado?",
   ops:[
     {t:"Queda en el chat y lo busco ahí",v:0},
@@ -526,7 +536,7 @@ const Q = [
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Qué sistema y quiénes"}},
 
 /* 9 · P10 nomenclatura */
-{id:"p10", tipo:"radio", eyebrow:"Tu orden", dim:"orden",
+{id:"q9_orden", tipo:"radio", eyebrow:"Tu orden", dim:"orden",
   t:"¿Cómo les ponés nombre a esos archivos?",
   ops:[
     {t:"Como salga en el momento",v:0},
@@ -539,7 +549,7 @@ const Q = [
     why:"Un ejemplo concreto sostiene lo que marcaste.", ph:"Un nombre de archivo tuyo"}},
 
 /* 10 · P11 autonomía — bandera, sin puntaje */
-{id:"p11", tipo:"radio", eyebrow:"Una semana sin IA",
+{id:"q10_autonomia", tipo:"radio", eyebrow:"Una semana sin IA",
   t:"Imaginá una semana entera sin poder usar IA. ¿Cómo sigue tu trabajo?",
   hint:"Nos muestra cuánto de tu trabajo ya se apoya en la IA.",
   ops:[
@@ -551,7 +561,7 @@ const Q = [
   ]},
 
 /* 11 · P13 herramientas — contexto, sin puntaje */
-{id:"p13", tipo:"multi", eyebrow:"Qué usás",
+{id:"q11_herramientas", tipo:"multi", eyebrow:"Qué usás",
   t:"¿Qué herramientas de IA usás?", hint:"Marcá todas las que apliquen.",
   grupos:[
     {g:"Chats de uso general", ops:["ChatGPT","Gemini","Claude","Copilot","Meta AI","Grok","DeepSeek"]},
@@ -561,10 +571,10 @@ const Q = [
 
 /* 12 · P12 + P14 por herramienta: por dónde y con qué cuenta — gobernanza, sin puntaje.
    Aparece solo si marcó algún chat u «Otra». */
-{id:"p14", tipo:"detalle", eyebrow:"Tus herramientas",
+{id:"q12_detalle", tipo:"detalle", eyebrow:"Tus herramientas",
   t:"¿Cómo usás cada una?", hint:"Abrí cada herramienta y respondé las dos preguntas.",
   // cuenta como paso hasta que P13 esté respondida: el total baja, nunca sube
-  si:()=>(R.p13===undefined && !R.p13_ninguna) || herramientasConDetalle().length>0,
+  si:()=>(R.q11_herramientas===undefined && !R.q11_herramientas_ninguna) || herramientasConDetalle().length>0,
   subProgreso:()=>{
     const l = herramientasConDetalle();
     return `${l.filter(detalleCompleto).length} de ${l.length} herramientas`;
@@ -573,7 +583,7 @@ const Q = [
 /* 13 · P15 datos — gobernanza, sin puntaje
    [PENDIENTE DE INÉS] formulación exacta de las dos filas de sistemas internos
    y las URLs de QlikView / Qlik Sense */
-{id:"p15", tipo:"multi", eyebrow:"Qué le compartís",
+{id:"q13_datos", tipo:"multi", eyebrow:"Qué le compartís",
   t:"¿Qué le compartís a la IA cuando le pedís ayuda?",
   hint:"Pegar un texto, subir un archivo o copiar una tabla cuentan. Marcá todo lo que hayas usado.",
   ops:[
@@ -589,13 +599,14 @@ const Q = [
   ninguna:"Todavía nada"},
 
 /* 14 · P16 recomendación — abierta, opcional */
-{id:"p16", tipo:"largo", eyebrow:"Tu aporte · opcional",
-  t:"¿Qué herramienta de IA le recomendarías a Divino?",
+{id:"q14_recomendacion", tipo:"largo", eyebrow:"Tu aporte · opcional",
+  t:"¿Qué herramienta de IA le recomendarías a Divino, y para qué?",
   hint:"Divino está evaluando qué herramientas sumar. Contanos cuál te funciona y para qué: tu recomendación entra en esa evaluación.",
-  ph:"Cuál y para qué la usás"},
+  ph:"Por ejemplo: NotebookLM, para resumir informes largos",
+  corto:"Contanos también para qué la usás"},
 
 /* 15 · P17 tarea deseada — abierta, opcional */
-{id:"p17", tipo:"largo", eyebrow:"Tu aporte · opcional",
+{id:"q15_tarea_deseada", tipo:"largo", eyebrow:"Tu aporte · opcional",
   t:"¿Qué tarea de tu trabajo te gustaría resolver con IA?",
   hint:"Con estas tareas elegimos los ejemplos de la master class y los talleres. La tuya puede ser una de ellas.",
   ph:"Qué tarea y qué te gustaría lograr"}
@@ -656,8 +667,11 @@ let enviando = false, intentos = 0, ultimoRender = 0, ignorarPop = false;
    Las respuestas en curso y el último resultado quedan en localStorage, solo en este navegador.
    Si el navegador bloquea el almacenamiento, el formulario funciona igual, sin memoria. */
 const K_ESTADO = "barometro_divino_estado", K_RESULTADO = "barometro_divino_resultado";
-function leer(k){ try{ return JSON.parse(localStorage.getItem(k)) }catch(e){ return null } }
-function escribir(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} }
+/* Subir el número cuando cambian los nombres o las opciones de las preguntas:
+   lo guardado con otra versión se descarta, en lugar de romper el formulario. */
+const VERSION_FORM = 2;
+function leer(k){ try{ const v = JSON.parse(localStorage.getItem(k)); return v && v.version===VERSION_FORM ? v : null }catch(e){ return null } }
+function escribir(k,v){ try{ localStorage.setItem(k,JSON.stringify({...v, version:VERSION_FORM})) }catch(e){} }
 function borrar(k){ try{ localStorage.removeItem(k) }catch(e){} }
 function vaciar(o){ Object.keys(o).forEach(k=>delete o[k]) }
 function guardarEstado(){ if(paso>0 && !registro && paso<=visibles().length) escribir(K_ESTADO,{R,UI,paso}) }
@@ -666,10 +680,10 @@ function guardarEstado(){ if(paso>0 && !registro && paso<=visibles().length) esc
 const visibles = () => Q.filter(q=>!q.si || q.si());
 
 function herramientasConDetalle(){
-  const marcadas = R.p13||[];
+  const marcadas = R.q11_herramientas||[];
   return Object.keys(SUPERFICIES).filter(n=>marcadas.includes(n));
 }
-function nombreHerr(n){ return n==="__otra" ? (R.p13_otra||"Otra herramienta") : n }
+function nombreHerr(n){ return n==="__otra" ? (R.q11_herramientas_otra||"Otra herramienta") : n }
 function detalleCompleto(n){ const d=(R.det||{})[n]; return !!(d && d.sup.length && d.cuenta!==undefined) }
 function resumenDetalle(n){
   const d = R.det[n];
@@ -873,16 +887,16 @@ function itemHtml(n, titulo, resp, done, open, cuerpo){
 }
 
 function bloqueMatriz(q){
-  const vals = R.p8 || {};
-  if(UI.p8===undefined) UI.p8 = 1;            // arranca con la primera abierta
+  const vals = R.q7_matriz || {};
+  if(UI.q7_matriz===undefined) UI.q7_matriz = 1;            // arranca con la primera abierta
   let h = `<div class="matriz-head">${esc(q.head)}</div><div id="acc">`;
   let n = 0;
   q.grupos.forEach(gr=>{
     h += `<div class="grupo">${esc(gr.g)}</div>`;
     gr.filas.forEach(f=>{
       n++;
-      const v = vals[n], sabe = v>=1 || !!(UI.p8sabe||{})[n];
-      h += itemHtml(n, f, respMatriz(q,v), filaCompleta(q,n), UI.p8===n,
+      const v = vals[n], sabe = v>=1 || !!(UI.q7_matriz_sabe||{})[n];
+      h += itemHtml(n, f, respMatriz(q,v), filaCompleta(q,n), UI.q7_matriz===n,
         `<div class="escala">
            <button type="button" class="esc${v===0?" sel":""}" data-fila="${n}" data-r="no">${esc(q.escala.no.t)}</button>
            <button type="button" class="esc${sabe?" sel":""}" data-fila="${n}" data-r="si">${esc(q.escala.si.t)}</button>
@@ -896,16 +910,16 @@ function bloqueMatriz(q){
   });
   h += `</div>
     <div class="field abierta">
-      <label class="fl" for="p8-abierta">${esc(q.abierta.label)} <span class="opc">Opcional</span></label>
+      <label class="fl" for="q7-abierta">${esc(q.abierta.label)} <span class="opc">Opcional</span></label>
       <p class="hint">${esc(q.abierta.hint)}</p>
-      <input type="text" id="p8-abierta" maxlength="2000" placeholder="${esc(q.abierta.ph)}" value="${esc(R.p8_abierta||"")}">
+      <input type="text" id="q7-abierta" maxlength="2000" placeholder="${esc(q.abierta.ph)}" value="${esc(R.q7_matriz_abierta||"")}">
     </div>`;
   return h;
 }
 
 /* una fila está completa con su respuesta y, si pide ejemplo, con el ejemplo escrito */
 function filaCompleta(q,f){
-  const v = (R.p8||{})[f];
+  const v = (R.q7_matriz||{})[f];
   if(v===undefined) return false;
   if(v===3 && q.ejemploFilas.includes(f)) return (ejemplos(q.id)[f]||"").length>=MIN_TEXTO;
   return true;
@@ -919,12 +933,12 @@ function respMatriz(q,v){
 function bloqueDetalle(q){
   const lista = herramientasConDetalle();
   R.det = R.det || {};
-  if(UI.p14===undefined || UI.p14>lista.length) UI.p14 = 1;
+  if(UI.q12_detalle===undefined || UI.q12_detalle>lista.length) UI.q12_detalle = 1;
   let h = `<div id="acc">`;
   lista.forEach((name,k)=>{
     const n = k+1, d = R.det[name] || {sup:[]};
     const done = detalleCompleto(name);
-    h += itemHtml(n, nombreHerr(name), done?resumenDetalle(name):"", done, UI.p14===n,
+    h += itemHtml(n, nombreHerr(name), done?resumenDetalle(name):"", done, UI.q12_detalle===n,
       `<div class="sub-lbl">¿Por dónde la usás?</div>
        <div class="chips" data-q="sup">${SUPERFICIES[name].map((s,i)=>
          `<button type="button" class="chip${d.sup.includes(s)?" sel":""}" data-i="${i}">${esc(s)}</button>`).join("")}</div>
@@ -945,7 +959,8 @@ function cablear(q){
   if(q.tipo==="campos"){
     q.campos.forEach((c,i)=>{
       const el = $("#c-"+c.id);
-      el.addEventListener("input",()=>{R[c.id]=el.value.trim();limpiar()});
+      // «change» cubre el autocompletado de navegadores que no avisan con «input»
+      ["input","change"].forEach(ev=>el.addEventListener(ev,()=>{R[c.id]=el.value.trim();limpiar()}));
       if(i===0) setTimeout(()=>el.focus(),120);
     });
   }
@@ -1034,35 +1049,35 @@ function cablear(q){
   if(q.tipo==="multi" && q.grupos) cablearHerramientas(q);
 
   if(q.tipo==="matriz"){
-    R.p8 = R.p8||{};
+    R.q7_matriz = R.q7_matriz||{};
     const cont = $("#acc");
     cablearAcordeon(cont,q.id);
-    UI.p8sabe = UI.p8sabe || {};
+    UI.q7_matriz_sabe = UI.q7_matriz_sabe || {};
     cont.querySelectorAll(".esc").forEach(b=>{
       b.addEventListener("click",()=>{
         const it = b.closest(".item"), f = +b.dataset.fila, uso = it.querySelector(".uso");
         const ejw = it.querySelector(".ejemplo-wrap");
-        const resp = ()=>{ it.querySelector(".item-resp").textContent = respMatriz(q,R.p8[f]) };
+        const resp = ()=>{ it.querySelector(".item-resp").textContent = respMatriz(q,R.q7_matriz[f]) };
         const pedir = on=>{
           if(!ejw) return;
           ejw.classList.toggle("on",on);
           if(!on){ delete ejemplos(q.id)[f]; ejw.querySelector("input").value = ""; }
         };
         if(b.dataset.r==="no"){                 // no sabe qué es: 0, y se cierra
-          R.p8[f] = 0; delete UI.p8sabe[f]; uso.hidden = true; pedir(false);
+          R.q7_matriz[f] = 0; delete UI.q7_matriz_sabe[f]; uso.hidden = true; pedir(false);
           it.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
           resp(); completarItem(cont,q.id,it);
         } else if(b.dataset.r==="si"){          // sabe qué es: se abre cuánto lo usa
-          UI.p8sabe[f] = true;
-          if(R.p8[f]===0) delete R.p8[f];
+          UI.q7_matriz_sabe[f] = true;
+          if(R.q7_matriz[f]===0) delete R.q7_matriz[f];
           it.querySelector('[data-r="no"]').classList.remove("sel");
           b.classList.add("sel"); uso.hidden = false;
           resp(); marcarEstado(it, filaCompleta(q,f));
         } else {                                // cuánto lo usa: 1 a 3
-          R.p8[f] = +b.dataset.v;
+          R.q7_matriz[f] = +b.dataset.v;
           uso.querySelectorAll(".esc").forEach(x=>x.classList.toggle("sel",x===b));
           resp();
-          const pide = !!ejw && R.p8[f]===3;
+          const pide = !!ejw && R.q7_matriz[f]===3;
           pedir(pide);
           // se cierra al responder; si pide ejemplo, queda abierta hasta escribirlo
           if(filaCompleta(q,f)) completarItem(cont,q.id,it);
@@ -1076,7 +1091,7 @@ function cablear(q){
       ejemplos(q.id)[f] = el.value.trim();
       marcarEstado(it, filaCompleta(q,f)); actualizarContador(q);
     }));
-    $("#p8-abierta").addEventListener("input",e=>R.p8_abierta=e.target.value.trim());
+    $("#q7-abierta").addEventListener("input",e=>R.q7_matriz_abierta=e.target.value.trim());
   }
 
   if(q.tipo==="detalle"){
@@ -1238,20 +1253,20 @@ function validar(q){
   };
   const MSG_OTRA = "Escribí cuál es tu otra opción.";
   const MSG_EJ = "Escribí el ejemplo para seguir.";
-  const texto = (el,v,msgVacio)=>{        // mismo largo mínimo para todo texto que se pide
+  const texto = (el,v,msgVacio,corto="Sumá un poco más de detalle")=>{   // mismo largo mínimo para todo texto que se pide
     v = v||"";
     if(!v) marcar(el,msgVacio);
-    else if(v.length<MIN_TEXTO) marcar(el,`Sumá un poco más de detalle: al menos ${MIN_TEXTO} caracteres.`);
+    else if(v.length<MIN_TEXTO) marcar(el,`${corto}: al menos ${MIN_TEXTO} caracteres.`);
   };
 
   if(q.tipo==="campos"){
-    const nom = R.nombre||"", mail = R.mail||"";
-    if(!nom) marcar($("#c-nombre"),"Escribí tu nombre y apellido.");
-    else if(nom.split(/\s+/).length<2) marcar($("#c-nombre"),"Sumá tu apellido.");
-    if(!mail) marcar($("#c-mail"),"Escribí tu correo.");
-    else if(!mail.includes("@")) marcar($("#c-mail"),"Al correo le falta la @.");
+    const nom = R.q1_nombre||"", mail = R.q1_mail||"";
+    if(!nom) marcar($("#c-q1_nombre"),"Escribí tu nombre y apellido.");
+    else if(nom.split(/\s+/).length<2) marcar($("#c-q1_nombre"),"Sumá tu apellido.");
+    if(!mail) marcar($("#c-q1_mail"),"Escribí tu correo.");
+    else if(!mail.includes("@")) marcar($("#c-q1_mail"),"Al correo le falta la @.");
     else if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail))
-      marcar($("#c-mail"),"Revisá el correo: tiene que quedar como nombre@dominio.com.");
+      marcar($("#c-q1_mail"),"Revisá el correo: tiene que quedar como nombre@dominio.com.");
     q.campos.filter(c=>c.err).forEach(c=>{
       if((R[c.id]||"").length<2) marcar($("#c-"+c.id),c.err);
     });
@@ -1299,8 +1314,8 @@ function validar(q){
       abrir(cont,q.id,+primero.dataset.item);
       if(q.tipo==="matriz"){
         const f = +primero.dataset.item;
-        if(R.p8[f]===undefined && (UI.p8sabe||{})[f]) marcar(primero.querySelector(".uso .escala"),"Elegí cuánto lo usás.");
-        else if(R.p8[f]===3) texto(primero.querySelector(".ejemplo-wrap input"),ejemplos("p8")[f],MSG_EJ);
+        if(R.q7_matriz[f]===undefined && (UI.q7_matriz_sabe||{})[f]) marcar(primero.querySelector(".uso .escala"),"Elegí cuánto lo usás.");
+        else if(R.q7_matriz[f]===3) texto(primero.querySelector(".ejemplo-wrap input"),ejemplos("q7_matriz")[f],MSG_EJ);
       }
       if(q.tipo==="detalle"){
         const d = (R.det||{})[herramientasConDetalle()[+primero.dataset.item-1]] || {sup:[]};
@@ -1312,8 +1327,8 @@ function validar(q){
   }
 
   // los campos opcionales, si se escriben, llevan el mismo largo mínimo
-  if(q.tipo==="matriz" && R.p8_abierta) texto($("#p8-abierta"),R.p8_abierta,"");
-  if(q.tipo==="largo" && R[q.id]) texto($("#in"),R[q.id],"");
+  if(q.tipo==="matriz" && R.q7_matriz_abierta) texto($("#q7-abierta"),R.q7_matriz_abierta,"");
+  if(q.tipo==="largo" && R[q.id]) texto($("#in"),R[q.id],"",q.corto);
 
   if(errs.length){
     const el = errs[0];
@@ -1330,7 +1345,7 @@ function completo(q){
   const largo = v=>(v||"").length>=MIN_TEXTO;
   const opcional = v=>!v || largo(v);
   if(q.tipo==="campos"){
-    const nom = R.nombre||"", mail = R.mail||"";
+    const nom = R.q1_nombre||"", mail = R.q1_mail||"";
     return nom.split(/\s+/).length>=2 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)
       && q.campos.filter(c=>c.err).every(c=>(R[c.id]||"").length>=2);
   }
@@ -1360,7 +1375,7 @@ function completo(q){
   }
   if(q.tipo==="matriz"){
     for(let f=1;f<=15;f++) if(!filaCompleta(q,f)) return false;
-    return opcional(R.p8_abierta);
+    return opcional(R.q7_matriz_abierta);
   }
   if(q.tipo==="detalle") return herramientasConDetalle().every(detalleCompleto);
   return true;
@@ -1390,39 +1405,39 @@ function textoEjemplos(id){
 
 function calcular(){
   /* --- bloque base --- */
-  const frecuencia = valorRadio("p3");
+  const frecuencia = valorRadio("q2_frecuencia");
 
-  const qp4 = Q.find(x=>x.id==="p4");
-  const marcadas = R.p4||[];
+  const qp4 = Q.find(x=>x.id==="q3_profundidad");
+  const marcadas = R.q3_profundidad||[];
   let profundidad = marcadas.reduce((m,i)=>qp4.ops[i].otra?m:Math.max(m,qp4.ops[i].v),0);
-  if(profundidad>=3 && !conEjemplo("p4")) profundidad -= 1;   // sin ejemplo baja un escalón
+  if(profundidad>=3 && !conEjemplo("q3_profundidad")) profundidad -= 1;   // sin ejemplo baja un escalón
 
-  let configuracion = valorRadio("p5");
-  if(configuracion>=3 && !conEjemplo("p5")) configuracion -= 1;
+  let configuracion = valorRadio("q4_configuracion");
+  if(configuracion>=3 && !conEjemplo("q4_configuracion")) configuracion -= 1;
 
-  const diagnostico = valorRadio("p6");
+  const diagnostico = valorRadio("q5_diagnostico");
 
-  let verificacion = valorRadio("p7");
-  if(verificacion>=3 && !conEjemplo("p7")) verificacion -= 1;
+  let verificacion = valorRadio("q6_verificacion");
+  if(verificacion>=3 && !conEjemplo("q6_verificacion")) verificacion -= 1;
 
   const base = frecuencia+profundidad+configuracion+diagnostico+verificacion;
 
   /* --- matriz --- */
-  const filas = {}, m8 = R.p8||{};
+  const filas = {}, m8 = R.q7_matriz||{};
   for(let f=1;f<=15;f++) filas[f] = m8[f]||0;
-  [10,11,12].forEach(f=>{ if(filas[f]===3 && !(ejemplos("p8")[f]||"").length) filas[f]=2 });
+  [10,11,12].forEach(f=>{ if(filas[f]===3 && !(ejemplos("q7_matriz")[f]||"").length) filas[f]=2 });
   const sumaMatriz = Object.values(filas).reduce((a,b)=>a+b,0);      // 0 a 45
   const matriz = Math.round((sumaMatriz/3)*100)/100;                  // 0 a 15
   const sumaConfigMatriz = filas[1]+filas[2]+filas[3]+filas[4];       // 0 a 12
   const cerosMatriz = Object.values(filas).filter(v=>v===0).length;
 
   /* --- continuidad y orden --- */
-  let continuidad = valorRadio("p9");
-  if(continuidad>=3 && !conEjemplo("p9")) continuidad -= 1;
+  let continuidad = valorRadio("q8_continuidad");
+  if(continuidad>=3 && !conEjemplo("q8_continuidad")) continuidad -= 1;
 
-  const opP10 = opRadio("p10");
-  let orden = valorRadio("p10");
-  if(opP10 && opP10.alta && !conEjemplo("p10")) orden -= 1;
+  const opP10 = opRadio("q9_orden");
+  let orden = valorRadio("q9_orden");
+  if(opP10 && opP10.alta && !conEjemplo("q9_orden")) orden -= 1;
 
   const avanzado = matriz+continuidad+orden;
   const total = Math.round((base+avanzado)*100)/100;
@@ -1431,16 +1446,16 @@ function calcular(){
   const peldano = [...PELDANOS].reverse().find(p=>total>=p.min) || PELDANOS[0];
 
   /* --- banderas --- */
-  const opP11 = opRadio("p11");
-  const qp15 = Q.find(x=>x.id==="p15");
+  const opP11 = opRadio("q10_autonomia");
+  const qp15 = Q.find(x=>x.id==="q13_datos");
   const cuentaPersonal = herramientasConDetalle()
     .some(n=>detalleCompleto(n) && CUENTAS[R.det[n].cuenta].personal);
-  const datoSensible  = (R.p15||[]).some(i=>qp15.ops[i].sensible);
+  const datoSensible  = (R.q13_datos||[]).some(i=>qp15.ops[i].sensible);
 
   const banderas = [];
   if(frecuencia>=3 && configuracion<=1)        banderas.push("intensidad_sin_metodo");
   if(profundidad>=3 && verificacion<=1)        banderas.push("uso_sin_control");
-  if(R.p5===0 || cerosMatriz>10)               banderas.push("desconocimiento");
+  if(R.q4_configuracion===0 || cerosMatriz>10)               banderas.push("desconocimiento");
   if(cuentaPersonal && datoSensible)           banderas.push("exposicion");
   if(opP11 && opP11.alta && sumaConfigMatriz<=4) banderas.push("dependencia_sin_arquitectura");
   if(sumaMatriz>=30 && continuidad<=1)         banderas.push("constructor_solitario");
@@ -1546,44 +1561,49 @@ function payload(){
     return s && R[s.id]!==undefined ? `${op.t} (${s.ops[R[s.id]]})` : op.t;
   }).join(" | ")};
 
+  /* Mismo orden que COLS en barometro_apps-script.gs: nombre y correo, resultado, cargo y área,
+     preguntas y control. La hoja agrega aplicacion, repetida y timestamp_navegador. */
+  const q7 = Q.find(x=>x.id==="q7_matriz");
   return {
-    timestamp:new Date().toISOString(),
-    nombre:R.nombre||"", mail:(R.mail||"").toLowerCase(),
-    area:R.area||"", cargo:R.cargo||"",
+    q1_nombre:R.q1_nombre||"", q1_mail:(R.q1_mail||"").toLowerCase(),
 
-    p3_frecuencia:nombreOp("p3",R.p3),
-    p4_profundidad:listaOps("p4"), p4_otra:R.p4_otra||"", p4_ejemplo:textoEjemplos("p4"),
-    p4_cantidad_tareas:(R.p4||[]).length,
-    p5_configuracion:nombreOp("p5",R.p5), p5_otra:R.p5_otra||"", p5_ejemplo:textoEjemplos("p5"),
-    p6_diagnostico:nombreOp("p6",R.p6), p6_otra:R.p6_otra||"",
-    p7_verificacion:nombreOp("p7",R.p7), p7_otra:R.p7_otra||"", p7_ejemplo:textoEjemplos("p7"),
+    peldano_num:r.peldano.n, peldano_nombre:r.peldano.nombre,
+    puntaje_total:r.total, banderas:r.banderas.join(" | "),
+    puntaje_base:r.base, dim_frecuencia:r.frecuencia, dim_profundidad:r.profundidad,
+    dim_configuracion:r.configuracion, dim_diagnostico:r.diagnostico, dim_verificacion:r.verificacion,
+    puntaje_avanzado:r.avanzado, dim_matriz:r.matriz, dim_continuidad:r.continuidad, dim_orden:r.orden,
+    dimension_mas_floja:r.dimFloja, paso_origen:r.pasoOrigen, paso_clave:r.pasoClave,
+
+    q1_cargo:R.q1_cargo||"", q1_area:R.q1_area||"",
+
+    q2_frecuencia:nombreOp("q2_frecuencia",R.q2_frecuencia),
+    q3_profundidad:listaOps("q3_profundidad"), q3_ejemplo:textoEjemplos("q3_profundidad"),
+    q3_otra:R.q3_profundidad_otra||"", q3_cantidad_tareas:(R.q3_profundidad||[]).length,
+    q4_configuracion:nombreOp("q4_configuracion",R.q4_configuracion), q4_ejemplo:textoEjemplos("q4_configuracion"),
+    q4_otra:R.q4_configuracion_otra||"",
+    q5_diagnostico:nombreOp("q5_diagnostico",R.q5_diagnostico), q5_otra:R.q5_diagnostico_otra||"",
+    q6_verificacion:nombreOp("q6_verificacion",R.q6_verificacion), q6_ejemplo:textoEjemplos("q6_verificacion"),
+    q6_otra:R.q6_verificacion_otra||"",
 
     ...Object.fromEntries(Array.from({length:15},(_,k)=>
-      ["p8_f"+String(k+1).padStart(2,"0"), (R.p8||{})[k+1]])),
-    p8_suma:r.sumaMatriz, p8_abierta:R.p8_abierta||"", p8_ejemplo:textoEjemplos("p8"),
+      [`q7_f${String(k+1).padStart(2,"0")}_${q7.colFilas[k]}`, (R.q7_matriz||{})[k+1]])),
+    q7_ejemplo:textoEjemplos("q7_matriz"), q7_abierta:R.q7_matriz_abierta||"", q7_suma:r.sumaMatriz,
 
-    p9_continuidad:nombreOp("p9",R.p9), p9_otra:R.p9_otra||"", p9_ejemplo:textoEjemplos("p9"),
-    p10_orden:nombreOp("p10",R.p10), p10_otra:R.p10_otra||"", p10_ejemplo:textoEjemplos("p10"),
-    p11_autonomia:nombreOp("p11",R.p11), p11_otra:R.p11_otra||"",
-    /* por herramienta, en las columnas que ya existen en la hoja:
-       «ChatGPT: Navegador, App del celular | Claude: App de escritorio» */
-    p12_superficies:detalleTexto("sup"), p12_otra:"",
+    q8_continuidad:nombreOp("q8_continuidad",R.q8_continuidad), q8_ejemplo:textoEjemplos("q8_continuidad"),
+    q8_otra:R.q8_continuidad_otra||"",
+    q9_orden:nombreOp("q9_orden",R.q9_orden), q9_ejemplo:textoEjemplos("q9_orden"), q9_otra:R.q9_orden_otra||"",
+    q10_autonomia:nombreOp("q10_autonomia",R.q10_autonomia), q10_otra:R.q10_autonomia_otra||"",
 
-    p13_herramientas:(R.p13||[]).filter(x=>x!=="__otra").join(" | "),
-    p13_otra:R.p13_otra||"", p13_ninguna:!!R.p13_ninguna, p13_mas_usada:"",
-    p14_acceso:detalleTexto("cuenta"), p14_otra:"",
-    p15_datos:listaOps("p15"), p15_otra:R.p15_otra||"",
-    p16_recomendacion:R.p16||"", p17_tarea_deseada:R.p17||"",
+    q11_ninguna:!!R.q11_herramientas_ninguna,
+    q11_herramientas:(R.q11_herramientas||[]).filter(x=>x!=="__otra").join(" | "),
+    q11_otra:R.q11_herramientas_otra||"",
+    /* por herramienta: «ChatGPT: Navegador, App del celular | Claude: App de escritorio» */
+    q12_superficies:detalleTexto("sup"), q12_cuenta:detalleTexto("cuenta"),
+    q13_datos:listaOps("q13_datos"), q13_otra:R.q13_datos_otra||"",
+    q14_recomendacion:R.q14_recomendacion||"",
+    q15_tarea_deseada:R.q15_tarea_deseada||"",
 
-    dim_frecuencia:r.frecuencia, dim_profundidad:r.profundidad,
-    dim_configuracion:r.configuracion, dim_diagnostico:r.diagnostico,
-    dim_verificacion:r.verificacion, puntaje_base:r.base,
-    dim_matriz:r.matriz, dim_continuidad:r.continuidad, dim_orden:r.orden,
-    puntaje_avanzado:r.avanzado, puntaje_total:r.total,
-    peldano_num:r.peldano.n, peldano_nombre:r.peldano.nombre,
-    banderas:r.banderas.join(" | "),
-    dimension_mas_floja:r.dimFloja,
-    paso_origen:r.pasoOrigen, paso_clave:r.pasoClave
+    timestamp:new Date().toISOString()
   };
 }
 
@@ -1602,7 +1622,7 @@ async function enviar(data){
     return true;
   }
   const ac = new AbortController();
-  const corte = setTimeout(()=>ac.abort(), 20000);   // 20 s sin respuesta cuenta como fallo
+  const corte = setTimeout(()=>ac.abort(), 45000);   // 45 s sin respuesta cuenta como fallo; el script espera su turno 10 s como máximo
   try{
     const res = await fetch(ENDPOINT,{
       method:"POST",
@@ -1625,19 +1645,23 @@ async function enviar(data){
   }
 }
 
+const AVISO_ENVIANDO = "Dejá esta pestaña abierta hasta ver tu resultado: así tus respuestas quedan guardadas.";
+
 /* El resultado aparece cuando la hoja confirma. Primer fallo: aviso y «Reintentar».
    Segundo fallo: aparece el resultado, con el envío por correo como respaldo. */
 async function enviarRespuestas(){
   resultado = calcular();
   const data = payload();
   const aviso = $("#aviso");
-  aviso.classList.remove("on");
+  aviso.textContent = AVISO_ENVIANDO;
+  aviso.classList.add("on","info");
   enviando = true;
   btnNext.disabled = btnBack.disabled = true;
   btnNext.textContent = "Enviando…";
   const ok = await enviar(data);
   enviando = false;
   btnNext.disabled = btnBack.disabled = false;
+  aviso.classList.remove("on","info");
   if(ok || ++intentos>=2){
     intentos = 0;
     return mostrarResultado({fecha:new Date().toISOString(), resultado, data, registrado:ok});
@@ -1673,6 +1697,7 @@ function pintarEnvio(){
   $("#reintentar").addEventListener("click",async e=>{
     const b = e.currentTarget;
     b.disabled = true; b.textContent = "Enviando…";
+    $("#envio p").textContent = AVISO_ENVIANDO;
     const ok = await enviar(registro.data);
     if(ok){ registro.registrado = true; escribir(K_RESULTADO, registro) }
     pintarEnvio();
@@ -1685,7 +1710,7 @@ function mailtoRespaldo(data){
   const cuerpo = Object.entries(data)
     .filter(([,v])=>v!=="" && v!==undefined && v!==null)
     .map(([k,v])=>`${k}: ${v}`).join("\n");
-  const asunto = `Barómetro · respaldo de ${data.nombre || "una respuesta"}`;
+  const asunto = `Barómetro · respaldo de ${data.q1_nombre || "una respuesta"}`;
   return `mailto:${RESPALDO_MAIL}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
@@ -1767,7 +1792,7 @@ window.addEventListener("popstate",e=>{
     paso = 0;
     return render();
   }
-  if(destino>1 && !R.nombre){ paso = 0; return render() }   // respuestas borradas: el historial lleva al inicio
+  if(destino>1 && !R.q1_nombre){ paso = 0; return render() }   // respuestas borradas: el historial lleva al inicio
   const V = visibles();
   if(destino>paso && paso>0 && !validar(V[paso-1])) return deshacer();   // adelante, solo con el paso completo
   paso = Math.min(destino, V.length);
@@ -1776,6 +1801,7 @@ window.addEventListener("popstate",e=>{
 
 /* la marca de error se despeja en cuanto la persona toca el campo marcado; cada cambio queda guardado */
 shell.addEventListener("input",e=>{ despejar(e.target); guardarEstado() });
+shell.addEventListener("change",e=>{ despejar(e.target); guardarEstado() });
 shell.addEventListener("click",e=>{ despejar(e.target); guardarEstado() });
 
 /* ---------- arranque ---------- */
